@@ -21,7 +21,7 @@ export default function NotificationsPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
               <Bell className="w-3.5 h-3.5" /> Notification Center
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-100 mt-1">System Alerts & Notifications</h1>
+            <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Notifications</h1>
           </div>
 
           <button

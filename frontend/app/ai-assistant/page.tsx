@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
-import { Bot, Send, Sparkles, User, Database, ShieldCheck, Cpu } from 'lucide-react';
+import { Bot, Send, User, Database, ShieldCheck, Cpu } from 'lucide-react';
 import { mockExpenses, mockIncomes, mockPrediction, mockBudgets } from '../../lib/mockData';
 
 interface Message {
@@ -85,8 +85,8 @@ export default function AIAssistantPage() {
               <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                SmartFin AI Assistant <Sparkles className="w-4 h-4 text-emerald-400" />
+              <h1 className="text-xl font-display font-semibold text-slate-100">
+                Assistant
               </h1>
               <p className="text-xs text-slate-400">Queries MongoDB & ML engines directly. Never invents numbers.</p>
             </div>
@@ -134,7 +134,7 @@ export default function AIAssistantPage() {
 
               <div className={`max-w-xl p-4 rounded-2xl text-xs space-y-1 ${
                 m.sender === 'user'
-                  ? 'bg-emerald-500 text-slate-950 font-medium rounded-tr-none'
+                  ? 'bg-emerald-500 text-ink-50 font-medium rounded-tr-none'
                   : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-tl-none'
               }`}>
                 <p className="leading-relaxed">{m.text}</p>
@@ -164,7 +164,7 @@ export default function AIAssistantPage() {
           />
           <button
             type="submit"
-            className="p-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transition-all"
+            className="p-3 rounded-md bg-ink-900 hover:bg-ink-800 text-white transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

@@ -24,7 +24,7 @@ export default function ProfilePage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
               <UserCheck className="w-3.5 h-3.5" /> Financial Profile Module
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-100 mt-1">User Financial Profile</h1>
+            <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Profile</h1>
             <p className="text-slate-400 text-xs">Used by Recommendation Engine and Health Scoring algorithms.</p>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             ) : <span />}
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+              className="px-6 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium flex items-center gap-2 transition-colors"
             >
               <Save className="w-4 h-4" /> Save Financial Profile
             </button>

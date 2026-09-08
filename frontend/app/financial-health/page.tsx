@@ -19,12 +19,12 @@ export default function FinancialHealthPage() {
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-rose-950/20 to-slate-900 border border-rose-500/30">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/20">
               <HeartPulse className="w-3.5 h-3.5" /> AI Module #5 — Health Scoring Engine
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">
               Financial Health Score & Diagnostics
             </h1>
             <p className="text-slate-400 text-xs md:text-sm">

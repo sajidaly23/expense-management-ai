@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { mockPrediction } from '../../lib/mockData';
+import { chartTheme, tooltipStyle } from '../../lib/theme';
 import { 
   BrainCircuit, 
   Sparkles, 
@@ -42,13 +43,13 @@ export default function PredictionsPage() {
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-emerald-950/40 to-slate-900 border border-emerald-500/30">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
               <BrainCircuit className="w-3.5 h-3.5" /> Core Artificial Intelligence Module
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
-              Expense Prediction & ML Model Pipeline
+            <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">
+              Expense forecasts
             </h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Machine Learning forecasting trained on historical user financial records. Evaluates model parameters dynamically.
@@ -58,7 +59,7 @@ export default function PredictionsPage() {
           <button
             onClick={handleRetrain}
             disabled={isTraining}
-            className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
+            className="px-5 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isTraining ? 'animate-spin' : ''}`} />
             {isTraining ? 'Training ML Pipeline...' : 'Re-Train & Select Best Model'}
@@ -129,15 +130,15 @@ export default function PredictionsPage() {
             <div className="h-80 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={mockPrediction.categoryPredictions}>
-                  <XAxis dataKey="category" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v/1000}k`} />
+                  <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                  <YAxis stroke={chartTheme.axis} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v/1000}k`} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }}
+                    contentStyle={tooltipStyle}
                     formatter={(val: any) => [`Rs. ${Number(val).toLocaleString()}`, 'Amount']}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar dataKey="previousAmount" fill="#475569" name="Previous Month Actual" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="predictedAmount" fill="#10b981" name="ML Next Month Predicted" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="previousAmount" fill={chartTheme.mutedBar} name="Previous Month Actual" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="predictedAmount" fill={chartTheme.copper} name="ML Next Month Predicted" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

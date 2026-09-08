@@ -70,13 +70,13 @@ export default function ExpensesPage() {
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900 border border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold border border-amber-500/20">
               <Receipt className="w-3.5 h-3.5" /> Primary ML Input Module
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight mt-1">
-              Expense Management & Tracking
+            <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">
+              Expenses
             </h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Record daily expenses with Need vs Want tags. Feeds historical datasets into the Python ML prediction service.
@@ -85,7 +85,7 @@ export default function ExpensesPage() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all"
+            className="px-5 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Expense Item
           </button>
@@ -289,7 +289,7 @@ export default function ExpensesPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold"
+                    className="px-4 py-2 rounded-md bg-ink-900 text-white font-medium"
                   >
                     Save & Trigger AI Scan
                   </button>

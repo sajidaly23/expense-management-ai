@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans, IBM_Plex_Serif } from "next/font/google";
 import "./globals.css";
 
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plexSerif = IBM_Plex_Serif({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "SmartFin AI - Personal Finance Management & Expense Prediction System",
-  description: "AI-powered financial management, expense forecasting, anomaly detection, and intelligent health scoring.",
+  title: "SmartFin AI — Personal Finance Management",
+  description: "Professional financial management, expense forecasting, anomaly detection, and health scoring.",
 };
 
 export default function RootLayout({
@@ -12,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased bg-slate-950 text-slate-100 min-h-screen">
+    <html lang="en" className={`${plexSans.variable} ${plexSerif.variable}`}>
+      <body className="antialiased bg-slate-950 text-slate-100 min-h-screen font-sans">
         {children}
       </body>
     </html>

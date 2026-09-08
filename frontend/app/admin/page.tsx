@@ -9,12 +9,10 @@ export default function AdminPage() {
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 rounded-3xl bg-slate-900 border border-purple-500/30">
+        <div className="flex items-center justify-between p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-semibold border border-purple-500/20">
-              <ShieldCheck className="w-3.5 h-3.5" /> ADMIN ONLY SUITE
-            </div>
-            <h1 className="text-2xl font-extrabold text-slate-100 mt-1">Admin Management & Audit Portal</h1>
+            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Administration</p>
+            <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Audit portal</h1>
           </div>
         </div>
 
