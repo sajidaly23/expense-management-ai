@@ -1,19 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrainCircuit, Lock, Mail, User, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { ApiError } from '../../lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user, loading: authLoading, register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [authLoading, user, router]);
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
+    setError('');
+    setSubmitting(true);
+    try {
+      await register(name.trim(), email.trim(), password);
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to create account. Check that the backend is running.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -30,6 +50,12 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4 text-sm">
+          {error && (
+            <div className="rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-500">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-slate-400 mb-1.5 font-medium">Full name</label>
             <div className="relative">
@@ -37,6 +63,8 @@ export default function RegisterPage() {
               <input
                 type="text"
                 required
+                minLength={2}
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Alex Mercer"
@@ -52,9 +80,10 @@ export default function RegisterPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="alex.mercer@university.edu"
+                placeholder="you@example.com"
                 className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400"
               />
             </div>
@@ -67,9 +96,11 @@ export default function RegisterPage() {
               <input
                 type="password"
                 required
+                minLength={6}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="At least 6 characters"
                 className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400"
               />
             </div>
@@ -77,9 +108,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+            disabled={submitting}
+            className="w-full py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
           >
-            Create account <ArrowRight className="w-4 h-4" />
+            {submitting ? 'Creating account…' : 'Create account'} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 

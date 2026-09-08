@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Serif } from "next/font/google";
 import "./globals.css";
+import AppProviders from "../components/providers/AppProviders";
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plexSans.variable} ${plexSerif.variable}`}>
       <body className="antialiased bg-slate-950 text-slate-100 min-h-screen font-sans">
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

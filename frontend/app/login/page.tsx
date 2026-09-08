@@ -1,18 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrainCircuit, Lock, Mail, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { ApiError } from '../../lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('alex.mercer@university.edu');
-  const [password, setPassword] = useState('••••••••••••');
+  const { user, loading: authLoading, login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [authLoading, user, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
+    setError('');
+    setSubmitting(true);
+    try {
+      await login(email.trim(), password);
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to sign in. Check that the backend is running.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -29,6 +49,12 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 text-sm">
+          {error && (
+            <div className="rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-500">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-slate-400 mb-1.5 font-medium">Email</label>
             <div className="relative">
@@ -36,9 +62,11 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-ink-400"
+                placeholder="you@example.com"
+                className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400"
               />
             </div>
           </div>
@@ -50,18 +78,22 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                minLength={6}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-ink-400"
+                placeholder="At least 6 characters"
+                className="w-full pl-9 pr-4 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+            disabled={submitting}
+            className="w-full py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
           >
-            Continue <ArrowRight className="w-4 h-4" />
+            {submitting ? 'Signing in…' : 'Continue'} <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 

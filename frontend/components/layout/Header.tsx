@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, Bell, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { mockNotifications } from '../../lib/mockData';
+import { getInitials, useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export default function Header({ setSidebarOpen }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const { user } = useAuth();
   const unreadCount = mockNotifications.filter(n => !n.read).length;
 
   return (
@@ -89,9 +91,9 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
 
         <Link href="/profile" className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-md hover:bg-slate-800 transition-colors">
           <div className="w-7 h-7 rounded-full bg-ink-900 text-white flex items-center justify-center font-semibold text-xs">
-            AM
+            {getInitials(user?.name)}
           </div>
-          <span className="text-sm font-medium text-slate-100 hidden sm:inline-block">Alex Mercer</span>
+          <span className="text-sm font-medium text-slate-100 hidden sm:inline-block">{user?.name || 'Account'}</span>
         </Link>
       </div>
     </header>

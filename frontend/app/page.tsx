@@ -1,26 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LandingPage from '../components/landing/LandingPage';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Check if token exists in localStorage (e.g. user logged in)
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('smartfin_token') : null;
-    if (token) {
-      setIsAuthenticated(true);
-      router.push('/dashboard');
-    } else {
-      setIsAuthenticated(false);
+    if (!loading && user) {
+      router.replace('/dashboard');
     }
-  }, [router]);
+  }, [loading, user, router]);
 
-  if (isAuthenticated === true) {
-    return null; // Will redirect to /dashboard
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <p className="text-sm text-slate-400">Loading…</p>
+      </div>
+    );
+  }
+
+  if (user) {
+    return null;
   }
 
   return <LandingPage />;

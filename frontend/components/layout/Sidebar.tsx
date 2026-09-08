@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   LogOut
 } from 'lucide-react';
+import { getInitials, useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -46,10 +49,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Assistant', href: '/ai-assistant', icon: Bot },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Profile', href: '/profile', icon: UserCheck },
-    { name: 'Administration', href: '/admin', icon: ShieldCheck },
+    ...(user?.role === 'ADMIN'
+      ? [{ name: 'Administration', href: '/admin', icon: ShieldCheck }]
+      : []),
   ];
 
-  const renderNavGroup = (title: string, items: typeof mainNav) => (
+  const renderNavGroup = (title: string, items: { name: string; href: string; icon: typeof LayoutDashboard }[]) => (
     <div className="space-y-0.5 py-2">
       <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-ink-400 uppercase">
         {title}
@@ -110,18 +115,26 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
         <div className="p-4 border-t border-ink-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold text-xs">
-                AM
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center font-semibold text-xs shrink-0">
+                {getInitials(user?.name)}
               </div>
-              <div className="text-left">
-                <p className="text-[13px] font-medium text-white">Alex Mercer</p>
-                <p className="text-[11px] text-ink-400">Personal account</p>
+              <div className="text-left min-w-0">
+                <p className="text-[13px] font-medium text-white truncate">{user?.name || 'Account'}</p>
+                <p className="text-[11px] text-ink-400 truncate">{user?.email || 'Personal account'}</p>
               </div>
             </div>
-            <Link href="/login" className="p-2 text-ink-400 hover:text-white transition-colors" title="Log out">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                router.replace('/login');
+              }}
+              className="p-2 text-ink-400 hover:text-white transition-colors"
+              title="Log out"
+            >
               <LogOut className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>

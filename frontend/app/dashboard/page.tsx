@@ -2,7 +2,6 @@
 
 import AppLayout from '../../components/layout/AppLayout';
 import { 
-  mockUser, 
   mockIncomes, 
   mockExpenses, 
   mockBudgets, 
@@ -37,8 +36,10 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { chartTheme, tooltipStyle } from '../../lib/theme';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const totalIncome = mockIncomes.reduce((acc, curr) => acc + curr.amount, 0);
   const totalExpense = mockExpenses.reduce((acc, curr) => acc + curr.amount, 0);
   const totalSavings = totalIncome - totalExpense;
@@ -60,7 +61,7 @@ export default function DashboardPage() {
           <div className="space-y-1">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Overview</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">
-              Welcome, {mockUser.name}
+              Welcome, {user?.name || 'there'}
             </h1>
             <p className="text-slate-400 text-sm">
               Health score <strong className="text-slate-100 font-semibold">{mockFinancialHealthScore.overallScore}/100 ({mockFinancialHealthScore.status})</strong>. Next-month expense forecast is ready.
