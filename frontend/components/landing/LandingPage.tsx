@@ -14,14 +14,9 @@ import {
   ArrowRight, 
   Menu, 
   X, 
-  Wallet, 
-  CreditCard, 
+  Receipt, 
   Target, 
-  Bot, 
-  Lock, 
-  ChevronRight,
-  Activity,
-  Layers
+  Bot
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -37,8 +32,10 @@ import {
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setScrolled(true);
@@ -351,20 +348,24 @@ export default function LandingPage() {
                     <span>May — Oct 2026</span>
                   </div>
                   <div className="h-32 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={heroCashflowData}>
-                        <defs>
-                          <linearGradient id="heroInc" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="month" stroke="#64748b" fontSize={9} tickLine={false} />
-                        <YAxis hide />
-                        <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} fill="url(#heroInc)" />
-                        <Area type="monotone" dataKey="expense" stroke="#f59e0b" strokeWidth={2} fill="transparent" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={heroCashflowData}>
+                          <defs>
+                            <linearGradient id="heroInc" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="month" stroke="#64748b" fontSize={9} tickLine={false} />
+                          <YAxis hide />
+                          <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} fill="url(#heroInc)" />
+                          <Area type="monotone" dataKey="expense" stroke="#f59e0b" strokeWidth={2} fill="transparent" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full bg-slate-950/60 rounded-xl animate-pulse" />
+                    )}
                   </div>
                 </div>
 
@@ -490,18 +491,22 @@ export default function LandingPage() {
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold text-slate-300">Category-Level Forecast Breakdown</h4>
                   <div className="h-52 w-full pt-2">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={predictionShowcaseData}>
-                        <XAxis dataKey="category" stroke="#64748b" fontSize={10} tickLine={false} />
-                        <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v/1000}k`} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
-                          formatter={(val: any) => [`Rs. ${Number(val).toLocaleString()}`, 'Amount']}
-                        />
-                        <Bar dataKey="actual" fill="#475569" name="Current Month" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="predicted" fill="#10b981" name="ML Forecast" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={predictionShowcaseData}>
+                          <XAxis dataKey="category" stroke="#64748b" fontSize={10} tickLine={false} />
+                          <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v/1000}k`} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
+                            formatter={(val: any) => [`Rs. ${Number(val).toLocaleString()}`, 'Amount']}
+                          />
+                          <Bar dataKey="actual" fill="#475569" name="Current Month" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="predicted" fill="#10b981" name="ML Forecast" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full bg-slate-950/60 rounded-xl animate-pulse" />
+                    )}
                   </div>
                 </div>
 
