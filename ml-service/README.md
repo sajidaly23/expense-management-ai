@@ -10,11 +10,21 @@ FastAPI-powered machine learning microservice for **SmartFin AI**.
 ## Quick Start
 
 ```bash
-# Install dependencies
+cd ml-service
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-# Start FastAPI server
 python app/main.py
 ```
 
-Server runs at `http://localhost:8000`. Access Swagger docs at `http://localhost:8000/docs`.
+Mac users: XGBoost needs OpenMP (`brew install libomp`). Without it, train still runs Linear Regression and Random Forest.
+
+Server runs at `http://localhost:8000`.
+- Health: `GET /health` (lists only model files that actually exist)
+- Train: `POST /train`
+- Predict: `POST /predict`
+- Anomalies: `POST /anomalies`
+
+CORS allows the local frontend (`:3000` / `:3001`) and Express (`:5000`) origins with credentials. Do not use `allow_origins=["*"]` with `allow_credentials=True`.
+
+Prefer uvicorn (above) over `python app/main.py`.
