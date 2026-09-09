@@ -23,6 +23,8 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   role: UserRole;
   occupation?: string;
   age?: number;
@@ -53,6 +55,14 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       minlength: 6,
+      select: false,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
       select: false,
     },
     role: {

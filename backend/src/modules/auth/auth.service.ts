@@ -1,9 +1,10 @@
+import crypto from 'crypto';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { config } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import { isDatabaseConnected } from '../../config/db.js';
 import { User, IUser } from './user.model.js';
-import { LoginInput, RegisterInput } from './auth.validation.js';
+import { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from './auth.validation.js';
 
 export type PublicUser = {
   id: string;
@@ -82,4 +83,54 @@ export async function getCurrentUser(userId: string) {
   }
 
   return toPublicUser(user);
+}
+
+function hashResetToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+export async function requestPasswordReset(input: ForgotPasswordInput) {
+  assertDatabase();
+
+  const message =
+    'If an account exists for that email, password reset instructions have been sent.';
+  const user = await User.findOne({ email: input.email.toLowerCase() }).select(
+    '+resetPasswordToken +resetPasswordExpires'
+  );
+
+  if (!user) {
+    return { message, resetUrl: undefined as string | undefined };
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  user.resetPasswordToken = hashResetToken(token);
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+  await user.save();
+
+  const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`;
+  return {
+    message,
+    resetUrl: config.nodeEnv !== 'production' ? resetUrl : undefined,
+  };
+}
+
+export async function resetPassword(input: ResetPasswordInput) {
+  assertDatabase();
+
+  const user = await User.findOne({
+    resetPasswordToken: hashResetToken(input.token),
+    resetPasswordExpires: { $gt: new Date() },
+  }).select('+password +resetPasswordToken +resetPasswordExpires');
+
+  if (!user) {
+    throw new AppError('Reset link is invalid or has expired.', 400);
+  }
+
+  user.password = input.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  const publicUser = toPublicUser(user);
+  return { token: signToken(publicUser), user: publicUser };
 }

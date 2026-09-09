@@ -1,7 +1,13 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { getCurrentUser, loginUser, registerUser } from './auth.service.js';
-import { LoginInput, RegisterInput } from './auth.validation.js';
+import {
+  getCurrentUser,
+  loginUser,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+} from './auth.service.js';
+import { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from './auth.validation.js';
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const result = await registerUser(req.body as RegisterInput);
@@ -26,5 +32,22 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
     user,
+  });
+});
+
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const result = await requestPasswordReset(req.body as ForgotPasswordInput);
+  res.status(200).json({
+    status: 'success',
+    ...result,
+  });
+});
+
+export const resetPasswordHandler = asyncHandler(async (req: Request, res: Response) => {
+  const result = await resetPassword(req.body as ResetPasswordInput);
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated.',
+    ...result,
   });
 });

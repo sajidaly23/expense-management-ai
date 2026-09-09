@@ -13,6 +13,7 @@ type AuthContextValue = {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  completeReset: (token: string, password: string, confirmPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -93,9 +94,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     persist(storedToken, res.user);
   }, []);
 
+  const completeReset = useCallback(async (token: string, password: string, confirmPassword: string) => {
+    const res = await authService.resetPassword({ token, password, confirmPassword });
+    persist(res.token, res.user);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, token, loading, login, register, logout, refreshUser }),
-    [user, token, loading, login, register, logout, refreshUser]
+    () => ({ user, token, loading, login, register, logout, refreshUser, completeReset }),
+    [user, token, loading, login, register, logout, refreshUser, completeReset]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
