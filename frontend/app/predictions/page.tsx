@@ -192,7 +192,7 @@ export default function PredictionsPage() {
                   <p className="text-sm text-slate-400">No category breakdown returned.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={prediction.categoryPredictions}>
+                    <BarChart data={prediction.categoryPredictions} barCategoryGap="28%" barGap={6}>
                       <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
@@ -206,8 +206,8 @@ export default function PredictionsPage() {
                         formatter={(val: number) => [`Rs. ${Number(val).toLocaleString()}`, '']}
                       />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Bar dataKey="previousAmount" fill={chartTheme.mutedBar} name="Last month actual" radius={[6, 6, 0, 0]} />
-                      <Bar dataKey="predictedAmount" fill={chartTheme.copper} name="Next month forecast" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="previousAmount" fill={chartTheme.mutedBar} name="Last month actual" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                      <Bar dataKey="predictedAmount" fill={chartTheme.copper} name="Next month forecast" radius={[6, 6, 0, 0]} maxBarSize={40} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
