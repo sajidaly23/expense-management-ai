@@ -16,7 +16,8 @@ import {
   FileText, 
   UserCheck, 
   ShieldCheck,
-  LogOut
+  LogOut,
+  Upload,
 } from 'lucide-react';
 import { getInitials, useAuth } from '../../context/AuthContext';
 
@@ -41,6 +42,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const managementNav = [
     { name: 'Income', href: '/income', icon: Wallet },
     { name: 'Expenses', href: '/expenses', icon: Receipt },
+    { name: 'Import Excel', href: '/import', icon: Upload },
     { name: 'Budgets', href: '/budgets', icon: PiggyBank },
     { name: 'Savings Goals', href: '/savings-goals', icon: Target },
   ];

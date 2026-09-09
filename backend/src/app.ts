@@ -14,6 +14,7 @@ import scoreRoutes from './modules/score/score.routes.js';
 import predictionRoutes from './modules/prediction/prediction.routes.js';
 import anomalyRoutes from './modules/anomaly/anomaly.routes.js';
 import assistantRoutes from './modules/assistant/assistant.routes.js';
+import importRoutes from './modules/import/import.routes.js';
 import reportRoutes from './modules/report/report.routes.js';
 import notificationRoutes from './modules/notification/notification.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
@@ -77,6 +78,7 @@ app.get('/', (_req, res) => {
     predictions: '/api/predictions',
     anomalies: '/api/anomalies',
     assistant: '/api/assistant',
+    import: '/api/import',
     reports: '/api/reports',
     notifications: '/api/notifications',
     admin: '/api/admin',
@@ -96,6 +98,7 @@ app.use('/api/health-score', scoreRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/anomalies', anomalyRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/import', importRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);

@@ -55,6 +55,28 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   return data as T;
 }
 
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('smartfin_token') : null;
+  const headers = new Headers();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const response = await browserFetch(path, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new ApiError(data.message || 'Upload failed.', response.status);
+  }
+
+  return data as T;
+}
+
 export async function apiDownload(path: string, filename: string) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('smartfin_token') : null;
   const headers = new Headers();
@@ -69,7 +91,16 @@ export async function apiDownload(path: string, filename: string) {
     throw new ApiError(data.message || 'Download failed.', response.status);
   }
 
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data = await parseJson(response);
+    throw new ApiError(data.message || 'Download failed.', response.status);
+  }
+
   const blob = await response.blob();
+  if (blob.size < 64) {
+    throw new ApiError('Download failed. The file from the server was empty or invalid.', response.status);
+  }
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

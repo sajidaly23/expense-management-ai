@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { AppError } from '../utils/AppError.js';
 import { config } from '../config/env.js';
 
@@ -10,6 +11,14 @@ export function notFoundHandler(_req: Request, res: Response) {
 }
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
+  if (err instanceof multer.MulterError) {
+    res.status(400).json({
+      status: 'error',
+      message: err.code === 'LIMIT_FILE_SIZE' ? 'File is too large. Maximum size is 5 MB.' : err.message,
+    });
+    return;
+  }
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       status: 'error',

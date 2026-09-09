@@ -20,6 +20,7 @@ const MODULE_LABELS: Record<string, string> = {
   anomalies: 'Anomalies',
   auth: 'Auth',
   admin: 'Admin',
+  import: 'Import',
 };
 
 function clientIp(req: Request) {
