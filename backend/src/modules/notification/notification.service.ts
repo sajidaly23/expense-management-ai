@@ -38,7 +38,7 @@ function toPublicNotification(item: INotification): PublicNotification {
     title: item.title,
     message: item.message,
     type: item.type,
-    read: item.read,
+    read: item.read === true,
     date: (item.createdAt || new Date()).toISOString(),
     sourceId: item.sourceId,
   };
@@ -117,6 +117,12 @@ export async function markNotificationRead(userId: string, id: string) {
 
 export async function markAllNotificationsRead(userId: string) {
   assertDatabase();
-  await Notification.updateMany({ userId, read: false }, { $set: { read: true } });
-  return listNotifications(userId);
+  await Notification.updateMany({ userId }, { $set: { read: true } });
+  const items = await Notification.find({ userId }).sort({ createdAt: -1, _id: -1 });
+  const notifications = items.map(toPublicNotification);
+  return {
+    notifications,
+    unreadCount: 0,
+    count: notifications.length,
+  };
 }

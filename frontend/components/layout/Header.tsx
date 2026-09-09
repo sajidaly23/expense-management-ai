@@ -42,6 +42,9 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
 
   useEffect(() => {
     void loadNotifications();
+    const refresh = () => void loadNotifications();
+    window.addEventListener('smartfin:notifications-changed', refresh);
+    return () => window.removeEventListener('smartfin:notifications-changed', refresh);
   }, []);
 
   return (

@@ -21,10 +21,16 @@ function formatWhen(iso: string) {
   return new Date(iso).toLocaleDateString();
 }
 
+function notifyHeaderRefresh() {
+  window.dispatchEvent(new Event('smartfin:notifications-changed'));
+}
+
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [markingAll, setMarkingAll] = useState(false);
   const [error, setError] = useState('');
+  const unreadCount = items.filter((item) => !item.read).length;
 
   const loadItems = async () => {
     setError('');
@@ -44,11 +50,19 @@ export default function NotificationsPage() {
   }, []);
 
   const markAllRead = async () => {
+    if (unreadCount === 0 || markingAll) return;
+    setMarkingAll(true);
+    setError('');
+    setItems((prev) => prev.map((row) => ({ ...row, read: true })));
     try {
       const result = await notificationService.markAllRead();
       setItems(result.notifications);
+      notifyHeaderRefresh();
     } catch (err) {
+      await loadItems();
       setError(err instanceof ApiError ? err.message : 'Unable to mark notifications as read.');
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -57,6 +71,7 @@ export default function NotificationsPage() {
     try {
       const result = await notificationService.markRead(item.id);
       setItems((prev) => prev.map((row) => (row.id === item.id ? result.notification : row)));
+      notifyHeaderRefresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to update that notification.');
     }
@@ -77,10 +92,10 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => void markAllRead()}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || unreadCount === 0 || markingAll}
             className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all disabled:opacity-50"
           >
-            Mark All Read
+            {markingAll ? 'Updating…' : unreadCount === 0 ? 'All caught up' : `Mark all read (${unreadCount})`}
           </button>
         </div>
 
@@ -105,15 +120,20 @@ export default function NotificationsPage() {
                 key={item.id}
                 onClick={() => void markOne(item)}
                 className={`w-full text-left p-4 rounded-2xl border transition-colors ${
-                  item.read ? 'bg-slate-900/60 border-slate-800/80 text-slate-400' : 'bg-slate-900 border-emerald-500/30 text-slate-200'
+                  item.read ? 'bg-slate-900/60 border-slate-800/80 opacity-75' : 'bg-slate-900 border-emerald-500/30 shadow-sm shadow-emerald-500/5'
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="font-bold text-slate-100 text-sm flex items-center gap-2">
                     {item.type === 'budget' || item.type === 'anomaly' ? <AlertCircle className="w-4 h-4 text-amber-400" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                     {item.title}
+                    {!item.read && (
+                      <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 border border-emerald-500/20">
+                        New
+                      </span>
+                    )}
                   </span>
-                  <span className="text-xs text-slate-500">{formatWhen(item.date)}</span>
+                  <span className="text-xs text-slate-500 shrink-0">{formatWhen(item.date)}</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1">{item.message}</p>
               </button>
