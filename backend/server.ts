@@ -18,6 +18,19 @@ async function startServer() {
       console.log(`SmartFin AI Backend API running on http://localhost:${config.port}`);
       console.log(`Health: http://localhost:${config.port}/api/health`);
       console.log(`Auth:   http://localhost:${config.port}/api/auth/register | /login | /me`);
+      console.log(`Income: http://localhost:${config.port}/api/income`);
+      console.log(`Expenses: http://localhost:${config.port}/api/expenses`);
+      console.log(`Summary: http://localhost:${config.port}/api/summary`);
+      console.log(`Budgets: http://localhost:${config.port}/api/budgets`);
+      console.log(`Goals:   http://localhost:${config.port}/api/goals`);
+      console.log(`Profile: http://localhost:${config.port}/api/profile`);
+      console.log(`Score:   http://localhost:${config.port}/api/health-score`);
+      console.log(`Predict: http://localhost:${config.port}/api/predictions`);
+      console.log(`Anomaly: http://localhost:${config.port}/api/anomalies`);
+      console.log(`Assist:  http://localhost:${config.port}/api/assistant`);
+      console.log(`Reports: http://localhost:${config.port}/api/reports`);
+      console.log(`Notify:  http://localhost:${config.port}/api/notifications`);
+      console.log(`Admin:   http://localhost:${config.port}/api/admin`);
     });
 
     server.on('error', (err: NodeJS.ErrnoException) => {
