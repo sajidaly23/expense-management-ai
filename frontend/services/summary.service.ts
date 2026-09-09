@@ -33,7 +33,9 @@ export type SummaryResponse = {
 };
 
 export const summaryService = {
-  get(months = 6) {
-    return apiRequest<SummaryResponse>(`/api/summary?months=${months}`);
+  get(months = 6, month?: string) {
+    const params = new URLSearchParams({ months: String(months) });
+    if (month) params.set('month', month);
+    return apiRequest<SummaryResponse>(`/api/summary?${params.toString()}`);
   },
 };

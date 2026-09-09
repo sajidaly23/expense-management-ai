@@ -8,16 +8,19 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recha
 import { summaryService, SummaryResponse } from '../../services/summary.service';
 import { ApiError } from '../../lib/api';
 
+const thisMonth = () => new Date().toISOString().slice(0, 7);
+
 export default function AnalyticsPage() {
+  const [selectedMonth, setSelectedMonth] = useState(thisMonth);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadSummary = async () => {
+  const loadSummary = async (monthKey = selectedMonth) => {
     setError('');
     setLoading(true);
     try {
-      const res = await summaryService.get();
+      const res = await summaryService.get(6, monthKey);
       setSummary(res);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load analytics.');
@@ -27,12 +30,12 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-    loadSummary();
-  }, []);
+    loadSummary(selectedMonth);
+  }, [selectedMonth]);
 
-  const categoryBarData = summary?.byCategory || [];
-  const monthly = summary?.monthly || [];
   const month = summary?.currentMonth;
+  const categoryBarData = month?.byCategory || [];
+  const monthly = summary?.monthly || [];
 
   return (
     <AppLayout>
@@ -48,12 +51,22 @@ export default function AnalyticsPage() {
               {month ? ` · ${month.label} savings rate ${month.savingsRate}%` : ''}.
             </p>
           </div>
+          <label className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 whitespace-nowrap">Month</span>
+            <input
+              type="month"
+              value={selectedMonth}
+              max={thisMonth()}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-3 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-sm text-slate-100"
+            />
+          </label>
         </div>
 
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">
             <span>{error}</span>
-            <button type="button" onClick={loadSummary} className="font-medium underline-offset-2 hover:underline">
+            <button type="button" onClick={() => loadSummary(selectedMonth)} className="font-medium underline-offset-2 hover:underline">
               Retry
             </button>
           </div>
@@ -66,13 +79,14 @@ export default function AnalyticsPage() {
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
               <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-emerald-400" /> Spend by category
+                {month ? ` · ${month.label}` : ''}
               </h3>
               <div className="h-72 w-full pt-2">
                 {categoryBarData.length === 0 ? (
                   <p className="text-sm text-slate-400 pt-16 text-center">Add expenses to see category totals.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryBarData}>
+                    <BarChart data={categoryBarData} barCategoryGap="28%">
                       <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
@@ -85,7 +99,7 @@ export default function AnalyticsPage() {
                         contentStyle={tooltipStyle}
                         formatter={(val: number) => [`Rs. ${Number(val).toLocaleString()}`, 'Amount']}
                       />
-                      <Bar dataKey="amount" fill={chartTheme.copper} radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="amount" fill={chartTheme.copper} radius={[6, 6, 0, 0]} maxBarSize={40} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -101,7 +115,7 @@ export default function AnalyticsPage() {
                   <p className="text-sm text-slate-400 pt-16 text-center">Add income or expenses to see savings by month.</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthly}>
+                    <BarChart data={monthly} barCategoryGap="28%">
                       <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
@@ -114,7 +128,7 @@ export default function AnalyticsPage() {
                         contentStyle={tooltipStyle}
                         formatter={(val: number) => [`Rs. ${Number(val).toLocaleString()}`, 'Savings']}
                       />
-                      <Bar dataKey="savings" fill={chartTheme.sage} radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="savings" fill={chartTheme.sage} radius={[6, 6, 0, 0]} maxBarSize={40} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}

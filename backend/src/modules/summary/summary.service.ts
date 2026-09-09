@@ -46,6 +46,14 @@ function monthKeys(count: number, currentKey: string) {
   return keys;
 }
 
+function startOfMonth(monthKey: string) {
+  return new Date(`${monthKey}-01T00:00:00.000Z`);
+}
+
+function startOfNextMonth(monthKey: string) {
+  return startOfMonth(shiftMonth(monthKey, 1));
+}
+
 function percentChange(current: number, previous: number) {
   if (previous === 0) {
     return current === 0 ? 0 : 100;
@@ -53,20 +61,23 @@ function percentChange(current: number, previous: number) {
   return Number((((current - previous) / previous) * 100).toFixed(1));
 }
 
-export async function getSummary(userId: string, months = 6) {
+export async function getSummary(userId: string, months = 6, month?: string) {
   assertDatabase();
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new AppError('User not found.', 404);
   }
 
-  const currentKey = monthKeyFromDate(new Date());
+  const currentKey = month || monthKeyFromDate(new Date());
   const keys = monthKeys(months, currentKey);
-  const rangeStart = new Date(`${keys[0]}-01T00:00:00.000Z`);
+  const rangeStart = startOfMonth(keys[0]);
+  const rangeEnd = startOfNextMonth(currentKey);
 
   const [incomes, expenses] = await Promise.all([
-    Income.find({ userId, date: { $gte: rangeStart } }).select('amount date').lean(),
-    Expense.find({ userId, date: { $gte: rangeStart } }).select('amount date category transactionType').lean(),
+    Income.find({ userId, date: { $gte: rangeStart, $lt: rangeEnd } }).select('amount date').lean(),
+    Expense.find({ userId, date: { $gte: rangeStart, $lt: rangeEnd } })
+      .select('amount date category transactionType')
+      .lean(),
   ]);
 
   const incomeByMonth: Record<string, number> = {};

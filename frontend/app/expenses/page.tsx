@@ -54,6 +54,8 @@ export default function ExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
+  const [deletingItem, setDeletingItem] = useState<Expense | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadExpenses = async () => {
     setError('');
@@ -131,13 +133,18 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this expense entry?')) return;
+  const handleDelete = async () => {
+    if (!deletingItem) return;
+    setDeleting(true);
+    setError('');
     try {
-      await expenseService.remove(id);
-      setExpenses((prev) => prev.filter((item) => item.id !== id));
+      await expenseService.remove(deletingItem.id);
+      setExpenses((prev) => prev.filter((item) => item.id !== deletingItem.id));
+      setDeletingItem(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to delete expense entry.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -298,7 +305,8 @@ export default function ExpensesPage() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        type="button"
+                        onClick={() => setDeletingItem(item)}
                         className="p-1.5 text-slate-500 hover:text-rose-500 transition-colors"
                         title="Delete"
                       >
@@ -446,6 +454,73 @@ export default function ExpensesPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {deletingItem &&
+          createPortal(
+            <div
+              className="fixed inset-0 z-[90] bg-slate-950/70 flex items-center justify-center p-4"
+              onClick={() => {
+                if (!deleting) setDeletingItem(null);
+              }}
+            >
+              <div
+                className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4 shadow-lift"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div>
+                  <h3 className="text-lg font-display font-semibold text-slate-100">Delete expense?</h3>
+                  <p className="text-sm text-slate-400 mt-1">This entry will be removed from your ledger. This cannot be undone.</p>
+                </div>
+
+                <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-4 space-y-2 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-400">Description</span>
+                    <span className="text-slate-100 font-medium text-right">{deletingItem.description}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-400">Category</span>
+                    <span className="text-slate-100">{deletingItem.category}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-400">Need / Want</span>
+                    <span className="text-slate-100">{deletingItem.transactionType}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-400">Payment</span>
+                    <span className="text-slate-100">{deletingItem.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-400">Date</span>
+                    <span className="text-slate-100">{deletingItem.date}</span>
+                  </div>
+                  <div className="flex justify-between gap-3 pt-2 border-t border-slate-800">
+                    <span className="text-slate-400">Amount</span>
+                    <span className="text-rose-400 font-semibold">Rs. {deletingItem.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-1">
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={() => setDeletingItem(null)}
+                    className="px-4 py-2 rounded-md border border-slate-800 text-slate-300 font-medium disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={() => void handleDelete()}
+                    className="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-medium disabled:opacity-60"
+                  >
+                    {deleting ? 'Deleting…' : 'Delete entry'}
+                  </button>
+                </div>
               </div>
             </div>,
             document.body

@@ -35,8 +35,11 @@ import { anomalyService } from '../../services/anomaly.service';
 import { ApiError } from '../../lib/api';
 import { Anomaly, FinancialHealthScore, Prediction } from '../../types';
 
+const thisMonth = () => new Date().toISOString().slice(0, 7);
+
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [selectedMonth, setSelectedMonth] = useState(thisMonth);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [score, setScore] = useState<FinancialHealthScore | null>(null);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
@@ -44,23 +47,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadSummary = async () => {
+  const loadSidecars = async () => {
+    const [scoreResult, predictionResult, anomalyResult] = await Promise.allSettled([
+      scoreService.get(),
+      predictionService.get(),
+      anomalyService.list(),
+    ]);
+    setScore(scoreResult.status === 'fulfilled' ? scoreResult.value.score : null);
+    setPrediction(predictionResult.status === 'fulfilled' ? predictionResult.value.prediction : null);
+    setAnomalies(anomalyResult.status === 'fulfilled' ? anomalyResult.value.anomalies : []);
+  };
+
+  const loadSummary = async (monthKey = selectedMonth) => {
     setError('');
     setLoading(true);
     try {
-      const [summaryResult, scoreResult, predictionResult, anomalyResult] = await Promise.allSettled([
-        summaryService.get(),
-        scoreService.get(),
-        predictionService.get(),
-        anomalyService.list(),
-      ]);
-      if (summaryResult.status === 'rejected') {
-        throw summaryResult.reason;
-      }
-      setSummary(summaryResult.value);
-      setScore(scoreResult.status === 'fulfilled' ? scoreResult.value.score : null);
-      setPrediction(predictionResult.status === 'fulfilled' ? predictionResult.value.prediction : null);
-      setAnomalies(anomalyResult.status === 'fulfilled' ? anomalyResult.value.anomalies : []);
+      setSummary(await summaryService.get(6, monthKey));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load dashboard totals.');
     } finally {
@@ -68,9 +70,18 @@ export default function DashboardPage() {
     }
   };
 
+  const reloadDashboard = () => {
+    loadSummary(selectedMonth);
+    loadSidecars();
+  };
+
   useEffect(() => {
-    loadSummary();
+    loadSidecars();
   }, []);
+
+  useEffect(() => {
+    loadSummary(selectedMonth);
+  }, [selectedMonth]);
 
   const month = summary?.currentMonth;
   const totalIncome = month?.income || 0;
@@ -105,7 +116,17 @@ export default function DashboardPage() {
                 : 'Totals come from the income and expense entries on your account.'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 whitespace-nowrap">Month</span>
+              <input
+                type="month"
+                value={selectedMonth}
+                max={thisMonth()}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="px-3 py-2.5 rounded-md bg-slate-950 border border-slate-800 text-sm text-slate-100"
+              />
+            </label>
             <Link
               href="/income"
               className="px-4 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 transition-colors"
@@ -124,7 +145,7 @@ export default function DashboardPage() {
         {error && (
           <div className="flex items-center justify-between gap-3 rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">
             <span>{error}</span>
-            <button type="button" onClick={loadSummary} className="font-medium underline-offset-2 hover:underline">
+            <button type="button" onClick={reloadDashboard} className="font-medium underline-offset-2 hover:underline">
               Retry
             </button>
           </div>
@@ -216,7 +237,11 @@ export default function DashboardPage() {
                   <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" /> Income and expenses
                   </h3>
-                  <p className="text-xs text-slate-400">Last six months from your ledger</p>
+                  <p className="text-xs text-slate-400">
+                    {chartData.length > 0
+                      ? `${chartData[0].month}–${chartData[chartData.length - 1].month} from your ledger`
+                      : 'Six months from your ledger'}
+                  </p>
                 </div>
                 <div className="h-72 w-full pt-4">
                   {chartData.every((row) => row.income === 0 && row.expense === 0) ? (
