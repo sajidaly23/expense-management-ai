@@ -109,52 +109,52 @@ export default function ReportsPage() {
         ) : !report ? (
           <p className="text-sm text-slate-400">No statement available yet.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-700 bg-white text-slate-900 shadow-lift">
-            <div className="bg-slate-950 px-8 py-6 text-white">
+          <div className="overflow-hidden rounded-xl border border-ink-100 bg-white text-ink-900 shadow-lift [&_h2]:text-white [&_h3]:text-ink-500">
+            <div className="bg-ink-900 px-8 py-6 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-400">SmartFin AI</p>
-                  <h2 className="text-2xl font-display font-semibold mt-1">Monthly Financial Statement</h2>
-                  <p className="text-sm text-slate-300 mt-2">Prepared for {report.preparedFor}</p>
+                  <h2 className="text-2xl font-display font-semibold mt-1 text-white">Monthly Financial Statement</h2>
+                  <p className="text-sm text-ink-100 mt-2">Prepared for {report.preparedFor}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Period</p>
-                  <p className="text-lg font-semibold">{report.period.label} {year}</p>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-ink-300">Period</p>
+                  <p className="text-lg font-semibold text-white">{report.period.label} {year}</p>
                   <p className="text-[11px] text-emerald-400 mt-2 font-semibold">CONFIDENTIAL</p>
                 </div>
               </div>
             </div>
-            <div className="h-1 bg-emerald-500" />
+            <div className="h-1 bg-emerald-400" />
 
             <div className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="border border-slate-200 rounded-lg p-4 border-l-4 border-l-emerald-500">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Income</p>
-                  <p className="text-xl font-semibold mt-1">{formatRs(report.currentMonth.income)}</p>
+                <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-emerald-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Income</p>
+                  <p className="text-xl font-semibold text-ink-900 mt-1">{formatRs(report.currentMonth.income)}</p>
                 </div>
-                <div className="border border-slate-200 rounded-lg p-4 border-l-4 border-l-amber-500">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Expenses</p>
-                  <p className="text-xl font-semibold mt-1">{formatRs(report.currentMonth.expense)}</p>
+                <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-amber-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Expenses</p>
+                  <p className="text-xl font-semibold text-ink-900 mt-1">{formatRs(report.currentMonth.expense)}</p>
                 </div>
-                <div className="border border-slate-200 rounded-lg p-4 border-l-4 border-l-violet-500">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Net savings</p>
-                  <p className="text-xl font-semibold mt-1">
+                <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-purple-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Net savings</p>
+                  <p className="text-xl font-semibold text-ink-900 mt-1">
                     {formatRs(report.currentMonth.savings)}
-                    <span className="text-sm font-medium text-slate-500 ml-2">({report.currentMonth.savingsRate}%)</span>
+                    <span className="text-sm font-medium text-ink-400 ml-2">({report.currentMonth.savingsRate}%)</span>
                   </p>
                 </div>
               </div>
 
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 border-b border-slate-200 pb-2 mb-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
                   Spending by category
                 </h3>
                 {report.currentMonth.byCategory.length === 0 ? (
-                  <p className="text-sm text-slate-500">No expenses recorded this month.</p>
+                  <p className="text-sm text-ink-400">No expenses recorded this month.</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm text-ink-900">
                     <thead>
-                      <tr className="bg-slate-950 text-white">
+                      <tr className="bg-ink-900 text-white">
                         <th className="text-left font-medium px-3 py-2">Category</th>
                         <th className="text-right font-medium px-3 py-2">Amount</th>
                         <th className="text-right font-medium px-3 py-2">Share</th>
@@ -162,10 +162,10 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       {report.currentMonth.byCategory.map((row) => (
-                        <tr key={row.category} className="border-b border-slate-100">
-                          <td className="px-3 py-2">{row.category}</td>
-                          <td className="px-3 py-2 text-right font-medium">{formatRs(row.amount)}</td>
-                          <td className="px-3 py-2 text-right text-slate-500">
+                        <tr key={row.category} className="border-b border-ink-50">
+                          <td className="px-3 py-2 text-ink-900">{row.category}</td>
+                          <td className="px-3 py-2 text-right font-medium text-ink-900">{formatRs(row.amount)}</td>
+                          <td className="px-3 py-2 text-right text-ink-400">
                             {expenseTotal ? `${((row.amount / expenseTotal) * 100).toFixed(1)}%` : '—'}
                           </td>
                         </tr>
@@ -176,15 +176,15 @@ export default function ReportsPage() {
               </section>
 
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 border-b border-slate-200 pb-2 mb-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
                   Budgets
                 </h3>
                 {report.budgets.length === 0 ? (
-                  <p className="text-sm text-slate-500">No budgets set for this month.</p>
+                  <p className="text-sm text-ink-400">No budgets set for this month.</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm text-ink-900">
                     <thead>
-                      <tr className="bg-slate-950 text-white">
+                      <tr className="bg-ink-900 text-white">
                         <th className="text-left font-medium px-3 py-2">Budget</th>
                         <th className="text-right font-medium px-3 py-2">Spent</th>
                         <th className="text-right font-medium px-3 py-2">Limit</th>
@@ -193,11 +193,11 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       {report.budgets.map((budget) => (
-                        <tr key={budget.id} className="border-b border-slate-100">
-                          <td className="px-3 py-2">{budget.category || 'Overall'}</td>
-                          <td className="px-3 py-2 text-right">{formatRs(budget.spent)}</td>
-                          <td className="px-3 py-2 text-right">{formatRs(budget.amount)}</td>
-                          <td className={`px-3 py-2 text-right font-medium ${budget.utilization > 100 ? 'text-rose-600' : 'text-slate-900'}`}>
+                        <tr key={budget.id} className="border-b border-ink-50">
+                          <td className="px-3 py-2 text-ink-900">{budget.category || 'Overall'}</td>
+                          <td className="px-3 py-2 text-right text-ink-900">{formatRs(budget.spent)}</td>
+                          <td className="px-3 py-2 text-right text-ink-900">{formatRs(budget.amount)}</td>
+                          <td className={`px-3 py-2 text-right font-medium ${budget.utilization > 100 ? 'text-rose-500' : 'text-ink-900'}`}>
                             {budget.utilization}%
                           </td>
                         </tr>
@@ -208,42 +208,42 @@ export default function ReportsPage() {
               </section>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Next-month forecast</p>
+                <div className="border border-ink-100 rounded-lg p-4 bg-ink-50">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Next-month forecast</p>
                   {report.prediction ? (
                     <>
-                      <p className="text-xl font-semibold text-violet-700 mt-1">{formatRs(report.prediction.predictedAmount)}</p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xl font-semibold text-purple-500 mt-1">{formatRs(report.prediction.predictedAmount)}</p>
+                      <p className="text-xs text-ink-400 mt-1">
                         {report.prediction.predictionPeriod} · {report.prediction.modelUsed}
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-slate-500 mt-2">No stored forecast. Train a model on Predictions first.</p>
+                    <p className="text-sm text-ink-400 mt-2">No stored forecast. Train a model on Predictions first.</p>
                   )}
                 </div>
-                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Financial health</p>
+                <div className="border border-ink-100 rounded-lg p-4 bg-ink-50">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Financial health</p>
                   {report.health ? (
                     <div className="mt-2 flex items-center gap-3">
-                      <p className="text-xl font-semibold">{report.health.overallScore} / 100</p>
+                      <p className="text-xl font-semibold text-ink-900">{report.health.overallScore} / 100</p>
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${healthClass(report.health.status)}`}>
                         {report.health.status}
                       </span>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-500 mt-2">Health score is not available.</p>
+                    <p className="text-sm text-ink-400 mt-2">Health score is not available.</p>
                   )}
                 </div>
               </div>
 
               {report.goals.length > 0 && (
                 <section>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 border-b border-slate-200 pb-2 mb-3">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
                     Savings goals
                   </h3>
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm text-ink-900">
                     <thead>
-                      <tr className="bg-slate-950 text-white">
+                      <tr className="bg-ink-900 text-white">
                         <th className="text-left font-medium px-3 py-2">Goal</th>
                         <th className="text-left font-medium px-3 py-2">Status</th>
                         <th className="text-right font-medium px-3 py-2">Remaining</th>
@@ -252,11 +252,11 @@ export default function ReportsPage() {
                     </thead>
                     <tbody>
                       {report.goals.map((goal) => (
-                        <tr key={goal.name} className="border-b border-slate-100">
-                          <td className="px-3 py-2">{goal.name}</td>
-                          <td className="px-3 py-2">{goal.status}</td>
-                          <td className="px-3 py-2 text-right">{formatRs(goal.remaining)}</td>
-                          <td className="px-3 py-2 text-right">{formatRs(goal.requiredMonthly)}</td>
+                        <tr key={goal.name} className="border-b border-ink-50">
+                          <td className="px-3 py-2 text-ink-900">{goal.name}</td>
+                          <td className="px-3 py-2 text-ink-900">{goal.status}</td>
+                          <td className="px-3 py-2 text-right text-ink-900">{formatRs(goal.remaining)}</td>
+                          <td className="px-3 py-2 text-right text-ink-900">{formatRs(goal.requiredMonthly)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -264,11 +264,11 @@ export default function ReportsPage() {
                 </section>
               )}
 
-              <section className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+              <section className="bg-ink-50 border border-ink-100 rounded-lg p-4">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 mb-2">
                   Executive summary
                 </h3>
-                <p className="text-sm leading-relaxed text-slate-700">{report.executiveSummary}</p>
+                <p className="text-sm leading-relaxed text-ink-700">{report.executiveSummary}</p>
               </section>
             </div>
           </div>
