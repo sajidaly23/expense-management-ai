@@ -1,16 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
-import { mockNotifications } from '../../lib/mockData';
 import { NotificationItem } from '../../types';
-import { Bell, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle2, AlertCircle } from 'lucide-react';
+import { notificationService } from '../../services/notification.service';
+import { ApiError } from '../../lib/api';
+
+function formatWhen(iso: string) {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return iso;
+  const diff = Date.now() - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 export default function NotificationsPage() {
-  const [items, setItems] = useState<NotificationItem[]>(mockNotifications);
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const markAllRead = () => {
-    setItems(prev => prev.map(i => ({ ...i, read: true })));
+  const loadItems = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const result = await notificationService.list();
+      setItems(result.notifications);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to load notifications.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadItems();
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      const result = await notificationService.markAllRead();
+      setItems(result.notifications);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to mark notifications as read.');
+    }
+  };
+
+  const markOne = async (item: NotificationItem) => {
+    if (item.read) return;
+    try {
+      const result = await notificationService.markRead(item.id);
+      setItems((prev) => prev.map((row) => (row.id === item.id ? result.notification : row)));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to update that notification.');
+    }
   };
 
   return (
@@ -22,35 +71,55 @@ export default function NotificationsPage() {
               <Bell className="w-3.5 h-3.5" /> Notification Center
             </div>
             <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Notifications</h1>
+            <p className="text-xs text-slate-400 mt-1">Created from budget overruns and unresolved anomalies.</p>
           </div>
 
           <button
-            onClick={markAllRead}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
+            type="button"
+            onClick={() => void markAllRead()}
+            disabled={items.length === 0}
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all disabled:opacity-50"
           >
             Mark All Read
           </button>
         </div>
 
-        <div className="space-y-3">
-          {items.map((n) => (
-            <div 
-              key={n.id} 
-              className={`p-4 rounded-2xl border transition-colors ${
-                n.read ? 'bg-slate-900/60 border-slate-800/80 text-slate-400' : 'bg-slate-900 border-emerald-500/30 text-slate-200'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-100 text-sm flex items-center gap-2">
-                  {n.type === 'budget' || n.type === 'anomaly' ? <AlertCircle className="w-4 h-4 text-amber-400" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                  {n.title}
-                </span>
-                <span className="text-xs text-slate-500">{n.date}</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">{n.message}</p>
-            </div>
-          ))}
-        </div>
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">
+            <span>{error}</span>
+            <button type="button" onClick={() => void loadItems()} className="font-medium underline-offset-2 hover:underline">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-sm text-slate-400">Loading notifications…</p>
+        ) : items.length === 0 ? (
+          <p className="text-sm text-slate-400">No budget overruns or unresolved anomalies right now.</p>
+        ) : (
+          <div className="space-y-3">
+            {items.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                onClick={() => void markOne(item)}
+                className={`w-full text-left p-4 rounded-2xl border transition-colors ${
+                  item.read ? 'bg-slate-900/60 border-slate-800/80 text-slate-400' : 'bg-slate-900 border-emerald-500/30 text-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    {item.type === 'budget' || item.type === 'anomaly' ? <AlertCircle className="w-4 h-4 text-amber-400" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                    {item.title}
+                  </span>
+                  <span className="text-xs text-slate-500">{formatWhen(item.date)}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">{item.message}</p>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

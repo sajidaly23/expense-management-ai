@@ -1,10 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, Bell, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { mockNotifications } from '../../lib/mockData';
 import { getInitials, useAuth } from '../../context/AuthContext';
+import { notificationService } from '../../services/notification.service';
+import { NotificationItem } from '../../types';
+
+function formatWhen(iso: string) {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return iso;
+  const diff = Date.now() - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
@@ -12,8 +27,22 @@ interface HeaderProps {
 
 export default function Header({ setSidebarOpen }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((item) => !item.read).length;
+
+  const loadNotifications = async () => {
+    try {
+      const result = await notificationService.list();
+      setNotifications(result.notifications);
+    } catch {
+      setNotifications([]);
+    }
+  };
+
+  useEffect(() => {
+    void loadNotifications();
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 md:px-8 flex items-center justify-between">
@@ -43,7 +72,10 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
 
         <div className="relative">
           <button
-            onClick={() => setShowNotifications(!showNotifications)}
+            onClick={() => {
+              setShowNotifications(!showNotifications);
+              if (!showNotifications) void loadNotifications();
+            }}
             className="relative p-2 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800 transition-colors"
           >
             <Bell className="w-5 h-5" />
@@ -63,27 +95,31 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
                 </Link>
               </div>
               <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-                {mockNotifications.map((n) => (
-                  <div 
-                    key={n.id} 
-                    className={`p-3 rounded-lg text-sm space-y-1 border ${
-                      n.read ? 'bg-slate-950/40 border-slate-800 text-slate-400' : 'bg-slate-950 border-slate-800 text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-slate-100 flex items-center gap-1.5">
-                        {n.type === 'budget' || n.type === 'anomaly' ? (
-                          <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                        ) : (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        )}
-                        {n.title}
-                      </span>
-                      <span className="text-[11px] text-slate-500 shrink-0">{n.date}</span>
+                {notifications.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-2">No budget overruns or unresolved anomalies.</p>
+                ) : (
+                  notifications.slice(0, 8).map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-3 rounded-lg text-sm space-y-1 border ${
+                        item.read ? 'bg-slate-950/40 border-slate-800 text-slate-400' : 'bg-slate-950 border-slate-800 text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-slate-100 flex items-center gap-1.5">
+                          {item.type === 'budget' || item.type === 'anomaly' ? (
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          )}
+                          {item.title}
+                        </span>
+                        <span className="text-[11px] text-slate-500 shrink-0">{formatWhen(item.date)}</span>
+                      </div>
+                      <p className="text-[12px] text-slate-400 leading-relaxed">{item.message}</p>
                     </div>
-                    <p className="text-[12px] text-slate-400 leading-relaxed">{n.message}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}

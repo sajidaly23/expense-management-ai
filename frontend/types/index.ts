@@ -10,12 +10,13 @@ export interface User {
 
 export interface UserProfile {
   name: string;
-  age: number;
+  email?: string;
+  age: number | null;
   occupation: string;
-  monthlyIncome: number;
+  monthlyIncome: number | null;
   familySize: number;
-  financialGoal: 'Save Money' | 'Buy a House' | 'Buy a Car' | 'Education' | 'Emergency Fund' | 'Investment' | 'Travel' | 'Other';
-  riskPreference: 'Low' | 'Medium' | 'High';
+  financialGoal: 'Save Money' | 'Buy a House' | 'Buy a Car' | 'Education' | 'Emergency Fund' | 'Investment' | 'Travel' | 'Other' | null;
+  riskPreference: 'Low' | 'Medium' | 'High' | null;
 }
 
 export type IncomeType = 'Salary' | 'Freelance' | 'Business' | 'Investment' | 'Gift' | 'Other';
@@ -62,10 +63,12 @@ export interface Expense {
 export interface Budget {
   id: string;
   userId: string;
-  category?: ExpenseCategory; // undefined for overall budget
+  category?: ExpenseCategory;
   amount: number;
   spent: number;
-  month: string; // e.g. "2026-09"
+  remaining: number;
+  utilization: number;
+  month: string;
 }
 
 export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'OVERDUE';
@@ -76,9 +79,12 @@ export interface SavingsGoal {
   name: string;
   targetAmount: number;
   currentAmount: number;
+  remaining: number;
   deadline: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   status: GoalStatus;
+  monthsRemaining: number;
+  requiredMonthly: number;
 }
 
 export interface PredictionModel {
@@ -87,6 +93,7 @@ export interface PredictionModel {
   rmse: number;
   mape: number;
   r2: number;
+  predictedAmount?: number;
 }
 
 export interface Prediction {
@@ -100,7 +107,9 @@ export interface Prediction {
   category?: ExpenseCategory;
   modelUsed: PredictionModel['name'];
   modelMetrics: PredictionModel;
+  comparedModels?: PredictionModel[];
   generatedDate: string;
+  monthsUsed?: number;
   categoryPredictions: { category: ExpenseCategory; predictedAmount: number; previousAmount: number }[];
 }
 

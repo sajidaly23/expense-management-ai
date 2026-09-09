@@ -1,62 +1,98 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
-import { 
-  mockIncomes, 
-  mockExpenses, 
-  mockBudgets, 
-  mockPrediction, 
-  mockAnomalies, 
-  mockFinancialHealthScore, 
-  monthlyTrendsData 
-} from '../../lib/mockData';
-import { 
-  Wallet, 
-  CreditCard, 
-  PiggyBank, 
-  TrendingUp, 
-  ArrowUpRight, 
-  HeartPulse, 
+import {
+  Wallet,
+  CreditCard,
+  PiggyBank,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  HeartPulse,
   Plus,
   ShieldAlert,
-  ChevronRight
+  ChevronRight,
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  BarChart, 
-  Bar 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import Link from 'next/link';
 import { chartTheme, tooltipStyle } from '../../lib/theme';
 import { useAuth } from '../../context/AuthContext';
+import { summaryService, SummaryResponse } from '../../services/summary.service';
+import { scoreService } from '../../services/score.service';
+import { predictionService } from '../../services/prediction.service';
+import { anomalyService } from '../../services/anomaly.service';
+import { ApiError } from '../../lib/api';
+import { Anomaly, FinancialHealthScore, Prediction } from '../../types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const totalIncome = mockIncomes.reduce((acc, curr) => acc + curr.amount, 0);
-  const totalExpense = mockExpenses.reduce((acc, curr) => acc + curr.amount, 0);
-  const totalSavings = totalIncome - totalExpense;
-  const savingsRate = ((totalSavings / totalIncome) * 100).toFixed(1);
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [score, setScore] = useState<FinancialHealthScore | null>(null);
+  const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const needsTotal = mockExpenses.filter(e => e.transactionType === 'NEED').reduce((acc, curr) => acc + curr.amount, 0);
-  const wantsTotal = mockExpenses.filter(e => e.transactionType === 'WANT').reduce((acc, curr) => acc + curr.amount, 0);
+  const loadSummary = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const [summaryResult, scoreResult, predictionResult, anomalyResult] = await Promise.allSettled([
+        summaryService.get(),
+        scoreService.get(),
+        predictionService.get(),
+        anomalyService.list(),
+      ]);
+      if (summaryResult.status === 'rejected') {
+        throw summaryResult.reason;
+      }
+      setSummary(summaryResult.value);
+      setScore(scoreResult.status === 'fulfilled' ? scoreResult.value.score : null);
+      setPrediction(predictionResult.status === 'fulfilled' ? predictionResult.value.prediction : null);
+      setAnomalies(anomalyResult.status === 'fulfilled' ? anomalyResult.value.anomalies : []);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to load dashboard totals.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    loadSummary();
+  }, []);
+
+  const month = summary?.currentMonth;
+  const totalIncome = month?.income || 0;
+  const totalExpense = month?.expense || 0;
+  const totalSavings = month?.savings || 0;
+  const savingsRate = month?.savingsRate ?? 0;
+  const needsTotal = month?.needsTotal || 0;
+  const wantsTotal = month?.wantsTotal || 0;
+  const needShare = totalExpense === 0 ? 0 : (needsTotal / totalExpense) * 100;
+  const wantShare = totalExpense === 0 ? 0 : (wantsTotal / totalExpense) * 100;
   const pieData = [
     { name: 'Needs', value: needsTotal, color: chartTheme.sage },
-    { name: 'Wants', value: wantsTotal, color: chartTheme.copper }
-  ];
+    { name: 'Wants', value: wantsTotal, color: chartTheme.copper },
+  ].filter((item) => item.value > 0);
+  const topCategories = month?.byCategory.slice(0, 3) || [];
+  const chartData = summary?.monthly || [];
+  const incomeUp = (month?.incomeChangePercent || 0) >= 0;
+  const expenseUp = (month?.expenseChangePercent || 0) >= 0;
 
   return (
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
-        {/* Welcome Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Overview</p>
@@ -64,7 +100,9 @@ export default function DashboardPage() {
               Welcome, {user?.name || 'there'}
             </h1>
             <p className="text-slate-400 text-sm">
-              Health score <strong className="text-slate-100 font-semibold">{mockFinancialHealthScore.overallScore}/100 ({mockFinancialHealthScore.status})</strong>. Next-month expense forecast is ready.
+              {month
+                ? `Totals for ${month.label} from your saved income and expenses.`
+                : 'Totals come from the income and expense entries on your account.'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -83,252 +121,269 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Top KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Total Income */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Total Monthly Income</span>
-              <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
-                <Wallet className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-display font-semibold text-slate-100">Rs. {totalIncome.toLocaleString()}</h3>
-              <p className="text-[11px] text-emerald-400 flex items-center gap-1 font-medium mt-1">
-                <ArrowUpRight className="w-3.5 h-3.5" /> +12.5% from last month
-              </p>
-            </div>
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">
+            <span>{error}</span>
+            <button type="button" onClick={loadSummary} className="font-medium underline-offset-2 hover:underline">
+              Retry
+            </button>
           </div>
+        )}
 
-          {/* Total Expenses */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Total Monthly Expenses</span>
-              <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 border border-amber-500/20">
-                <CreditCard className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-display font-semibold text-slate-100">Rs. {totalExpense.toLocaleString()}</h3>
-              <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-1">
-                <ArrowUpRight className="w-3.5 h-3.5" /> Need vs Want: {((needsTotal/totalExpense)*100).toFixed(0)}% / {((wantsTotal/totalExpense)*100).toFixed(0)}%
-              </p>
-            </div>
-          </div>
-
-          {/* Net Savings */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Net Monthly Savings</span>
-              <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400 border border-teal-500/20">
-                <PiggyBank className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-display font-semibold text-slate-100">Rs. {totalSavings.toLocaleString()}</h3>
-              <p className="text-[11px] text-teal-400 font-medium mt-1">
-                Savings Rate: <strong>{savingsRate}%</strong> (Target: &ge;20%)
-              </p>
-            </div>
-          </div>
-
-          {/* Financial Health Score */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Financial Health Score</span>
-              <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400 border border-rose-500/20">
-                <HeartPulse className="w-5 h-5" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-2xl font-display font-semibold text-slate-100">{mockFinancialHealthScore.overallScore}</h3>
-                <span className="text-xs text-slate-400">/ 100 ({mockFinancialHealthScore.status})</span>
-              </div>
-              <div className="w-full bg-slate-800 h-2 rounded-full mt-2 overflow-hidden">
-                <div 
-                  className="bg-ink-900 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${mockFinancialHealthScore.overallScore}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main ML Prediction & Trend Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart Area */}
-          <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-emerald-400" /> Financial Cashflow & Forecast
-                </h3>
-                <p className="text-xs text-slate-400">Historical Income, Expenses & ML Predicted Next Month</p>
-              </div>
-              <span className="text-xs text-slate-500 font-mono">Model: {mockPrediction.modelUsed}</span>
-            </div>
-
-            <div className="h-72 w-full pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyTrendsData}>
-                  <defs>
-                    <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={chartTheme.sage} stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor={chartTheme.sage} stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={chartTheme.copper} stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor={chartTheme.copper} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
-                  <YAxis stroke={chartTheme.axis} fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v/1000}k`} />
-                  <Tooltip 
-                    contentStyle={tooltipStyle}
-                    formatter={(value: any) => [`Rs. ${Number(value).toLocaleString()}`, 'Amount']}
-                  />
-                  <Area type="monotone" dataKey="income" stroke={chartTheme.sage} strokeWidth={3} fillOpacity={1} fill="url(#incomeGrad)" name="Income" />
-                  <Area type="monotone" dataKey="expense" stroke={chartTheme.copper} strokeWidth={3} fillOpacity={1} fill="url(#expenseGrad)" name="Expenses" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* AI Expense Prediction Feature Spotlight */}
-          <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">
-                  Forecast
-                </span>
-                <span className="text-[11px] text-slate-400">R² 0.94</span>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-400">Predicted expense · {mockPrediction.predictionPeriod}</p>
-                <h2 className="text-3xl font-display font-semibold text-slate-100 mt-1">
-                  Rs. {mockPrediction.predictedAmount.toLocaleString()}
-                </h2>
-                <p className="text-xs text-amber-500 font-medium mt-1">
-                  +Rs. {mockPrediction.changeAmount.toLocaleString()} ({mockPrediction.changePercentage}%) vs last month
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>Selected model</span>
-                  <span className="text-slate-100 font-medium">{mockPrediction.modelUsed}</span>
+        {loading ? (
+          <p className="text-sm text-slate-400">Loading dashboard…</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400">Income · {month?.label}</span>
+                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
+                    <Wallet className="w-5 h-5" />
+                  </div>
                 </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>MAE</span>
-                  <span>Rs. {mockPrediction.modelMetrics.mae}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>RMSE</span>
-                  <span>Rs. {mockPrediction.modelMetrics.rmse}</span>
+                <div>
+                  <h3 className="text-2xl font-display font-semibold text-slate-100">
+                    Rs. {totalIncome.toLocaleString()}
+                  </h3>
+                  <p className={`text-[11px] flex items-center gap-1 font-medium mt-1 ${incomeUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {incomeUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                    {Math.abs(month?.incomeChangePercent || 0)}% vs last month
+                  </p>
                 </div>
               </div>
-            </div>
 
-            <Link
-              href="/predictions"
-              className="w-full py-2.5 rounded-md border border-slate-800 hover:bg-slate-950 text-slate-100 font-medium text-sm flex items-center justify-center gap-2 transition-colors"
-            >
-              Model comparison <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400">Expenses · {month?.label}</span>
+                  <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-500 border border-amber-500/20">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-display font-semibold text-slate-100">
+                    Rs. {totalExpense.toLocaleString()}
+                  </h3>
+                  <p className="text-[11px] text-amber-500 font-medium mt-1">
+                    Need vs Want: {needShare.toFixed(0)}% / {wantShare.toFixed(0)}%
+                  </p>
+                </div>
+              </div>
 
-        {/* Anomaly Alerts & Budget Status Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Anomaly Detection Alerts Card */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-amber-400" /> Isolation Forest Anomaly Alerts
-              </h3>
-              <Link href="/anomalies" className="text-xs text-emerald-400 hover:underline">
-                View All Log ({mockAnomalies.length})
+              <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400">Net savings · {month?.label}</span>
+                  <div className="p-2.5 bg-teal-500/10 rounded-xl text-teal-400 border border-teal-500/20">
+                    <PiggyBank className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-display font-semibold text-slate-100">
+                    Rs. {totalSavings.toLocaleString()}
+                  </h3>
+                  <p className="text-[11px] text-teal-400 font-medium mt-1">
+                    Savings rate: <strong>{savingsRate}%</strong> (target ≥ 20%)
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/financial-health" className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 hover:border-slate-700 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-400">Financial health</span>
+                  <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-500 border border-rose-500/20">
+                    <HeartPulse className="w-5 h-5" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-2xl font-display font-semibold text-slate-100">{score?.overallScore ?? '—'}</h3>
+                    <span className="text-xs text-slate-400">/ 100</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium mt-1">{score?.status || 'Not scored yet'}</p>
+                  <div className="w-full bg-slate-800 h-2 rounded-full mt-2 overflow-hidden">
+                    <div
+                      className="bg-ink-900 h-full rounded-full"
+                      style={{ width: `${Math.min(Math.max(score?.overallScore || 0, 0), 100)}%` }}
+                    />
+                  </div>
+                </div>
               </Link>
             </div>
 
-            <div className="space-y-3">
-              {mockAnomalies.map((anom) => (
-                <div key={anom.id} className="p-4 rounded-2xl bg-slate-950/60 border border-amber-500/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-200">{anom.expenseDescription}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      anom.severity === 'HIGH' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    }`}>
-                      {anom.severity} ANOMALY
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">{anom.reason}</p>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                    <span>Category: {anom.category}</span>
-                    <span className="font-mono text-rose-400 font-bold">Rs. {anom.amount.toLocaleString()}</span>
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+                <div>
+                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-emerald-400" /> Income and expenses
+                  </h3>
+                  <p className="text-xs text-slate-400">Last six months from your ledger</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Need vs Want & Budget Utilization */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
-                <PiggyBank className="w-5 h-5 text-teal-400" /> Need vs Want Spending Breakdown
-              </h3>
-              <Link href="/budgets" className="text-xs text-emerald-400 hover:underline">
-                Manage Budgets
-              </Link>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
-              <div className="w-40 h-40 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={pieData} innerRadius={45} outerRadius={65} paddingAngle={5} dataKey="value">
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[10px] text-slate-500">Total Spent</span>
-                  <span className="text-xs font-bold text-slate-200">Rs. {(needsTotal+wantsTotal).toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="flex-1 space-y-3 w-full">
-                {mockBudgets.filter(b => b.category).slice(0, 3).map((b) => {
-                  const util = Math.round((b.spent / b.amount) * 100);
-                  return (
-                    <div key={b.id} className="space-y-1.5 text-xs">
-                      <div className="flex justify-between font-medium">
-                        <span className="text-slate-300">{b.category} Budget</span>
-                        <span className={util >= 100 ? 'text-rose-400 font-bold' : util >= 80 ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
-                          {util}% ({b.spent.toLocaleString()} / {b.amount.toLocaleString()})
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            util >= 100 ? 'bg-rose-500' : util >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(util, 100)}%` }}
+                <div className="h-72 w-full pt-4">
+                  {chartData.every((row) => row.income === 0 && row.expense === 0) ? (
+                    <p className="text-sm text-slate-400 pt-16 text-center">
+                      Add income or expenses to see the cashflow chart.
+                    </p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartTheme.sage} stopOpacity={0.4} />
+                            <stop offset="95%" stopColor={chartTheme.sage} stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartTheme.copper} stopOpacity={0.4} />
+                            <stop offset="95%" stopColor={chartTheme.copper} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                        <YAxis
+                          stroke={chartTheme.axis}
+                          fontSize={11}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(v) => (v >= 1000 ? `Rs.${v / 1000}k` : `Rs.${v}`)}
                         />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          formatter={(value: number) => [`Rs. ${Number(value).toLocaleString()}`, '']}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="income"
+                          stroke={chartTheme.sage}
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#incomeGrad)"
+                          name="Income"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="expense"
+                          stroke={chartTheme.copper}
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#expenseGrad)"
+                          name="Expenses"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Forecast</span>
+                  <div>
+                    <p className="text-xs text-slate-400">
+                      {prediction ? prediction.predictionPeriod : 'Next-month prediction'}
+                    </p>
+                    <h2 className="text-xl font-display font-semibold text-slate-100 mt-1">
+                      {prediction ? `Rs. ${prediction.predictedAmount.toLocaleString()}` : 'Not trained yet'}
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {prediction
+                        ? `${prediction.modelUsed} · ${prediction.changePercentage >= 0 ? '+' : ''}${prediction.changePercentage}% vs last month`
+                        : 'Train a model on /predictions after you have at least 3 months of expenses.'}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/predictions"
+                  className="w-full py-2.5 rounded-md border border-slate-800 hover:bg-slate-950 text-slate-100 font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  Open predictions <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-amber-400" /> Anomaly alerts
+                  </h3>
+                  <Link href="/anomalies" className="text-xs text-emerald-500 hover:underline">
+                    View anomalies
+                  </Link>
+                </div>
+                {anomalies.filter((item) => item.status === 'UNRESOLVED').length === 0 ? (
+                  <p className="text-sm text-slate-400">
+                    No unresolved unusual expenses. Scan on the anomalies page after you have at least 8 expense entries.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {anomalies
+                      .filter((item) => item.status === 'UNRESOLVED')
+                      .slice(0, 3)
+                      .map((item) => (
+                        <p key={item.id} className="text-sm text-slate-300">
+                          {item.expenseDescription} · Rs. {item.amount.toLocaleString()} ({item.severity})
+                        </p>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <PiggyBank className="w-5 h-5 text-teal-400" /> Need vs Want
+                  </h3>
+                  <Link href="/analytics" className="text-xs text-emerald-500 hover:underline">
+                    Open analytics
+                  </Link>
+                </div>
+
+                {totalExpense === 0 ? (
+                  <p className="text-sm text-slate-400">Add an expense to see Need vs Want and top categories.</p>
+                ) : (
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+                    <div className="w-40 h-40 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} innerRadius={45} outerRadius={65} paddingAngle={5} dataKey="value">
+                            {pieData.map((entry) => (
+                              <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-slate-500">Spent</span>
+                        <span className="text-xs font-bold text-slate-200">Rs. {totalExpense.toLocaleString()}</span>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="flex-1 space-y-3 w-full">
+                      {topCategories.length === 0 ? (
+                        <p className="text-sm text-slate-400">No category totals this month.</p>
+                      ) : (
+                        topCategories.map((item) => {
+                          const share = Math.round((item.amount / totalExpense) * 100);
+                          return (
+                            <div key={item.category} className="space-y-1.5 text-xs">
+                              <div className="flex justify-between font-medium">
+                                <span className="text-slate-300">{item.category}</span>
+                                <span className="text-slate-100">
+                                  {share}% (Rs. {item.amount.toLocaleString()})
+                                </span>
+                              </div>
+                              <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-ink-900" style={{ width: `${Math.min(share, 100)}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </AppLayout>
   );

@@ -23,12 +23,13 @@ export const mockUser: User = {
 
 export const mockUserProfile: UserProfile = {
   name: 'Alex Mercer',
+  email: 'alex.mercer@university.edu',
   age: 24,
   occupation: 'Software Engineer',
   monthlyIncome: 95000,
   familySize: 2,
   financialGoal: 'Buy a House',
-  riskPreference: 'Medium'
+  riskPreference: 'Medium',
 };
 
 export const mockIncomes: Income[] = [
@@ -51,19 +52,19 @@ export const mockExpenses: Expense[] = [
 ];
 
 export const mockBudgets: Budget[] = [
-  { id: 'bgt_overall', userId: 'usr_101', amount: 75000, spent: 78900, month: '2026-09' },
-  { id: 'bgt_food', userId: 'usr_101', category: 'Food', amount: 18000, spent: 14500, month: '2026-09' },
-  { id: 'bgt_rent', userId: 'usr_101', category: 'Rent', amount: 22000, spent: 22000, month: '2026-09' },
-  { id: 'bgt_shopping', userId: 'usr_101', category: 'Shopping', amount: 12000, spent: 18500, month: '2026-09' },
-  { id: 'bgt_transport', userId: 'usr_101', category: 'Transport', amount: 8000, spent: 6200, month: '2026-09' },
-  { id: 'bgt_entertainment', userId: 'usr_101', category: 'Entertainment', amount: 7000, spent: 8000, month: '2026-09' },
+  { id: 'bgt_overall', userId: 'usr_101', amount: 75000, spent: 78900, remaining: 0, utilization: 105, month: '2026-09' },
+  { id: 'bgt_food', userId: 'usr_101', category: 'Food', amount: 18000, spent: 14500, remaining: 3500, utilization: 81, month: '2026-09' },
+  { id: 'bgt_rent', userId: 'usr_101', category: 'Rent', amount: 22000, spent: 22000, remaining: 0, utilization: 100, month: '2026-09' },
+  { id: 'bgt_shopping', userId: 'usr_101', category: 'Shopping', amount: 12000, spent: 18500, remaining: 0, utilization: 154, month: '2026-09' },
+  { id: 'bgt_transport', userId: 'usr_101', category: 'Transport', amount: 8000, spent: 6200, remaining: 1800, utilization: 78, month: '2026-09' },
+  { id: 'bgt_entertainment', userId: 'usr_101', category: 'Entertainment', amount: 7000, spent: 8000, remaining: 0, utilization: 114, month: '2026-09' },
 ];
 
 export const mockSavingsGoals: SavingsGoal[] = [
-  { id: 'goal_1', userId: 'usr_101', name: 'House Down Payment', targetAmount: 1500000, currentAmount: 620000, deadline: '2027-12-31', priority: 'HIGH', status: 'ACTIVE' },
-  { id: 'goal_2', userId: 'usr_101', name: 'Emergency Fund (6 Mos)', targetAmount: 400000, currentAmount: 310000, deadline: '2026-11-30', priority: 'HIGH', status: 'ACTIVE' },
-  { id: 'goal_3', userId: 'usr_101', name: 'New Vehicle Purchase', targetAmount: 800000, currentAmount: 250000, deadline: '2027-06-30', priority: 'MEDIUM', status: 'ACTIVE' },
-  { id: 'goal_4', userId: 'usr_101', name: 'Japan Travel Fund', targetAmount: 200000, currentAmount: 200000, deadline: '2026-08-01', priority: 'LOW', status: 'COMPLETED' },
+  { id: 'goal_1', userId: 'usr_101', name: 'House Down Payment', targetAmount: 1500000, currentAmount: 620000, remaining: 880000, deadline: '2027-12-31', priority: 'HIGH', status: 'ACTIVE', monthsRemaining: 15, requiredMonthly: 58667 },
+  { id: 'goal_2', userId: 'usr_101', name: 'Emergency Fund (6 Mos)', targetAmount: 400000, currentAmount: 310000, remaining: 90000, deadline: '2026-11-30', priority: 'HIGH', status: 'ACTIVE', monthsRemaining: 2, requiredMonthly: 45000 },
+  { id: 'goal_3', userId: 'usr_101', name: 'New Vehicle Purchase', targetAmount: 800000, currentAmount: 250000, remaining: 550000, deadline: '2027-06-30', priority: 'MEDIUM', status: 'ACTIVE', monthsRemaining: 9, requiredMonthly: 61112 },
+  { id: 'goal_4', userId: 'usr_101', name: 'Japan Travel Fund', targetAmount: 200000, currentAmount: 200000, remaining: 0, deadline: '2026-08-01', priority: 'LOW', status: 'COMPLETED', monthsRemaining: 0, requiredMonthly: 0 },
 ];
 
 export const mockPrediction: Prediction = {
