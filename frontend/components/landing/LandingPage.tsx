@@ -130,7 +130,7 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="font-display text-lg font-semibold text-slate-100">SmartFin</span>
-              <span className="ml-2 text-[11px] tracking-[0.14em] uppercase text-slate-400">AI</span>
+              <span className="ml-2 text-xs tracking-[0.14em] uppercase text-slate-400">AI</span>
             </div>
           </Link>
 
@@ -181,7 +181,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-5 space-y-6">
-              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-500">
+              <p className="typo-overline text-emerald-500">
                 Personal finance, formally organised
               </p>
               <h1 className="text-4xl sm:text-5xl font-display font-semibold text-slate-100 leading-[1.15]">
@@ -229,16 +229,16 @@ export default function LandingPage() {
                     { label: 'Net savings', value: 'Rs. 19,600', note: '21.5% rate' },
                   ].map((s) => (
                     <div key={s.label} className="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-[11px] text-slate-500 font-medium">{s.label}</span>
+                      <span className="text-xs text-slate-500 font-medium">{s.label}</span>
                       <p className="text-sm font-semibold text-slate-100 mt-1">{s.value}</p>
-                      <span className="text-[11px] text-emerald-500">{s.note}</span>
+                      <span className="text-xs text-emerald-500">{s.note}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-500 font-semibold">Next-month forecast</p>
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-500 font-semibold">Next-month forecast</p>
                     <h3 className="text-xl font-display font-semibold text-slate-100 mt-1">Rs. 82,450</h3>
                     <p className="text-xs text-slate-400 mt-0.5">XGBoost selected · R² 0.94</p>
                   </div>
@@ -257,7 +257,7 @@ export default function LandingPage() {
                             <stop offset="95%" stopColor={chartTheme.sage} stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={10} tickLine={false} />
+                        <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
                         <YAxis hide />
                         <Area type="monotone" dataKey="income" stroke={chartTheme.sage} strokeWidth={2} fill="url(#heroInc)" />
                         <Area type="monotone" dataKey="expense" stroke={chartTheme.copper} strokeWidth={2} fill="transparent" />
@@ -276,7 +276,7 @@ export default function LandingPage() {
       <section id="features" className="py-20 border-t border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-500">Capabilities</p>
+            <p className="typo-overline text-emerald-500">Capabilities</p>
             <h2 className="text-3xl sm:text-4xl font-display font-semibold text-slate-100 mt-2">
               The ledger, the forecast, and the exceptions.
             </h2>
@@ -308,7 +308,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-5 space-y-5">
-              <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-500">Forecasting</p>
+              <p className="typo-overline text-emerald-500">Forecasting</p>
               <h2 className="text-3xl sm:text-4xl font-display font-semibold text-slate-100 leading-tight">
                 Know the likely spend before the month starts.
               </h2>
@@ -346,7 +346,7 @@ export default function LandingPage() {
                     { label: 'R²', value: '0.94' },
                   ].map((m) => (
                     <div key={m.label} className="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                      <span className="text-[11px] text-slate-500 block">{m.label}</span>
+                      <span className="text-xs text-slate-500 block">{m.label}</span>
                       <strong className="text-sm font-semibold text-slate-100">{m.value}</strong>
                     </div>
                   ))}
@@ -356,10 +356,10 @@ export default function LandingPage() {
                   {mounted ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={predictionShowcaseData}>
-                        <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={10} tickLine={false} />
-                        <YAxis stroke={chartTheme.axis} fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `${v / 1000}k`} />
+                        <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
+                        <YAxis stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} axisLine={false} tickFormatter={(v) => `${v / 1000}k`} />
                         <Tooltip 
-                          contentStyle={{ ...tooltipStyle, fontSize: '11px' }}
+                          contentStyle={tooltipStyle}
                           formatter={(val: number) => [`Rs. ${Number(val).toLocaleString()}`, 'Amount']}
                         />
                         <Bar dataKey="actual" fill={chartTheme.mutedBar} name="Current" radius={[3, 3, 0, 0]} />
@@ -379,7 +379,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-20 border-t border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-500">Process</p>
+            <p className="typo-overline text-emerald-500">Process</p>
             <h2 className="text-3xl sm:text-4xl font-display font-semibold text-slate-100 mt-2">How SmartFin is used</h2>
           </div>
 
@@ -398,7 +398,7 @@ export default function LandingPage() {
       <section id="benefits" className="py-20 border-t border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-12">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-500">Coverage</p>
+            <p className="typo-overline text-emerald-500">Coverage</p>
             <h2 className="text-3xl sm:text-4xl font-display font-semibold text-slate-100 mt-2">
               What the workspace covers
             </h2>

@@ -113,7 +113,7 @@ export default function ImportPage() {
           <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-teal-500/10 blur-3xl" />
           <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 typo-overline tracking-wider text-emerald-400">
                 <Sparkles className="w-3.5 h-3.5" /> Bulk data import
               </div>
               <h1 className="text-3xl md:text-4xl font-display font-semibold text-slate-100">
@@ -135,7 +135,7 @@ export default function ImportPage() {
                   }`}
                 >
                   <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                    className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
                       step >= item.id ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-400'
                     }`}
                   >

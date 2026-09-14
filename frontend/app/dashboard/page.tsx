@@ -106,7 +106,7 @@ export default function DashboardPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Overview</p>
+            <p className="typo-overline text-slate-400">Overview</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">
               Welcome, {user?.name || 'there'}
             </h1>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                   <h3 className="text-2xl font-display font-semibold text-slate-100">
                     Rs. {totalIncome.toLocaleString()}
                   </h3>
-                  <p className={`text-[11px] flex items-center gap-1 font-medium mt-1 ${incomeUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  <p className={`text-xs flex items-center gap-1 font-medium mt-1 ${incomeUp ? 'text-emerald-500' : 'text-rose-500'}`}>
                     {incomeUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                     {Math.abs(month?.incomeChangePercent || 0)}% vs last month
                   </p>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                   <h3 className="text-2xl font-display font-semibold text-slate-100">
                     Rs. {totalExpense.toLocaleString()}
                   </h3>
-                  <p className="text-[11px] text-amber-500 font-medium mt-1">
+                  <p className="text-xs text-amber-500 font-medium mt-1">
                     Need vs Want: {needShare.toFixed(0)}% / {wantShare.toFixed(0)}%
                   </p>
                 </div>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                   <h3 className="text-2xl font-display font-semibold text-slate-100">
                     Rs. {totalSavings.toLocaleString()}
                   </h3>
-                  <p className="text-[11px] text-teal-400 font-medium mt-1">
+                  <p className="text-xs text-teal-400 font-medium mt-1">
                     Savings rate: <strong>{savingsRate}%</strong> (target ≥ 20%)
                   </p>
                 </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
                     <h3 className="text-2xl font-display font-semibold text-slate-100">{score?.overallScore ?? '—'}</h3>
                     <span className="text-xs text-slate-400">/ 100</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 font-medium mt-1">{score?.status || 'Not scored yet'}</p>
+                  <p className="text-xs text-slate-400 font-medium mt-1">{score?.status || 'Not scored yet'}</p>
                   <div className="w-full bg-slate-800 h-2 rounded-full mt-2 overflow-hidden">
                     <div
                       className="bg-ink-900 h-full rounded-full"
@@ -234,7 +234,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
                 <div>
-                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                  <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-400" /> Income and expenses
                   </h3>
                   <p className="text-xs text-slate-400">
@@ -261,10 +261,10 @@ export default function DashboardPage() {
                             <stop offset="95%" stopColor={chartTheme.copper} stopOpacity={0} />
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                        <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
                         <YAxis
                           stroke={chartTheme.axis}
-                          fontSize={11}
+                          fontSize={chartTheme.tickFontSize}
                           tickLine={false}
                           axisLine={false}
                           tickFormatter={(v) => (v >= 1000 ? `Rs.${v / 1000}k` : `Rs.${v}`)}
@@ -299,7 +299,7 @@ export default function DashboardPage() {
 
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4 flex flex-col justify-between">
                 <div className="space-y-3">
-                  <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Forecast</span>
+                  <span className="typo-overline text-slate-400">Forecast</span>
                   <div>
                     <p className="text-xs text-slate-400">
                       {prediction ? prediction.predictionPeriod : 'Next-month prediction'}
@@ -326,7 +326,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                  <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
                     <ShieldAlert className="w-5 h-5 text-amber-400" /> Anomaly alerts
                   </h3>
                   <Link href="/anomalies" className="text-xs text-emerald-500 hover:underline">
@@ -353,7 +353,7 @@ export default function DashboardPage() {
 
               <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+                  <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
                     <PiggyBank className="w-5 h-5 text-teal-400" /> Need vs Want
                   </h3>
                   <Link href="/analytics" className="text-xs text-emerald-500 hover:underline">
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-slate-500">Spent</span>
+                        <span className="text-xs text-slate-500">Spent</span>
                         <span className="text-xs font-bold text-slate-200">Rs. {totalExpense.toLocaleString()}</span>
                       </div>
                     </div>

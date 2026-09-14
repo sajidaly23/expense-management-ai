@@ -58,7 +58,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const renderNavGroup = (title: string, items: { name: string; href: string; icon: typeof LayoutDashboard }[]) => (
     <div className="space-y-0.5 py-2">
-      <p className="px-3 pb-1.5 text-[10px] font-semibold tracking-[0.14em] text-ink-400 uppercase">
+      <p className="px-3 pb-1.5 typo-overline text-ink-400">
         {title}
       </p>
       {items.map((item) => {
@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             key={item.href}
             href={item.href}
             onClick={() => setIsOpen(false)}
-            className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+            className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-white/10 text-white'
                 : 'text-ink-300 hover:text-white hover:bg-white/5'
@@ -101,8 +101,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               <BrainCircuit className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-display text-[17px] font-semibold text-white leading-none">SmartFin</p>
-              <p className="text-[11px] text-ink-400 mt-0.5">Wealth &amp; Planning</p>
+              <p className="font-display text-lg font-semibold text-white leading-none">SmartFin</p>
+              <p className="text-xs text-ink-400 mt-0.5">Wealth &amp; Planning</p>
             </div>
           </Link>
 
@@ -122,8 +122,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 {getInitials(user?.name)}
               </div>
               <div className="text-left min-w-0">
-                <p className="text-[13px] font-medium text-white truncate">{user?.name || 'Account'}</p>
-                <p className="text-[11px] text-ink-400 truncate">{user?.email || 'Personal account'}</p>
+                <p className="text-sm font-medium text-white truncate">{user?.name || 'Account'}</p>
+                <p className="text-xs text-ink-400 truncate">{user?.email || 'Personal account'}</p>
               </div>
             </div>
             <button

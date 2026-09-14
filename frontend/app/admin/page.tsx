@@ -50,7 +50,7 @@ export default function AdminPage() {
         <div className="space-y-8 max-w-7xl mx-auto">
           <div className="flex items-center justify-between p-6 rounded-xl bg-slate-900 border border-slate-800">
             <div>
-              <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Administration</p>
+              <p className="typo-overline text-slate-400">Administration</p>
               <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Audit portal</h1>
               <p className="text-xs text-slate-400 mt-1">Counts and logs from MongoDB. Mutations after this release are recorded automatically.</p>
             </div>
@@ -89,7 +89,7 @@ export default function AdminPage() {
               </div>
 
               <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
+                <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
                   <Lock className="w-4 h-4 text-purple-400" /> System Audit Logs
                 </h3>
 

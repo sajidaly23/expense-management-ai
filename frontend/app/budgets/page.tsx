@@ -146,7 +146,7 @@ export default function BudgetsPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Accounts</p>
+            <p className="typo-overline text-slate-400">Accounts</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">Budgets</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Set monthly limits. Spent is calculated from your expense entries for that month.
@@ -226,7 +226,7 @@ export default function BudgetsPage() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm text-slate-100">{item.category}</span>
                         <div className="flex items-center gap-1">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${utilClass(item.utilization)}`}>
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${utilClass(item.utilization)}`}>
                             {utilLabel(item.utilization)}
                           </span>
                           <button onClick={() => openEdit(item)} className="p-1 text-slate-500 hover:text-slate-100" title="Edit">
@@ -244,7 +244,7 @@ export default function BudgetsPage() {
                       <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${barClass(item.utilization)}`} style={{ width: `${Math.min(item.utilization, 100)}%` }} />
                       </div>
-                      <div className="text-[11px] text-slate-500 flex justify-between">
+                      <div className="text-xs text-slate-500 flex justify-between">
                         <span>Remaining: Rs. {item.remaining.toLocaleString()}</span>
                         <span>{item.utilization}%</span>
                       </div>

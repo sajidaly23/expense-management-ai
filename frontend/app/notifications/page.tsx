@@ -128,7 +128,7 @@ export default function NotificationsPage() {
                     {item.type === 'budget' || item.type === 'anomaly' ? <AlertCircle className="w-4 h-4 text-amber-400" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                     {item.title}
                     {!item.read && (
-                      <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400 border border-emerald-500/20">
+                      <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-400 border border-emerald-500/20">
                         New
                       </span>
                     )}

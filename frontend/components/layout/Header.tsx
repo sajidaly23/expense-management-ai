@@ -68,7 +68,7 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md border border-slate-800 text-[11px] font-medium text-slate-400">
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md border border-slate-800 text-xs font-medium text-slate-400">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           Systems operational
         </div>
@@ -83,7 +83,7 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-ink-900 text-white text-[10px] font-semibold flex items-center justify-center">
+              <span className="absolute top-1 right-1 min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-ink-900 text-white text-overline font-semibold flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
@@ -93,7 +93,7 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
             <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-800 rounded-xl shadow-lift z-50 p-4 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                 <h4 className="text-sm font-semibold text-slate-100">Notifications</h4>
-                <Link href="/notifications" className="text-[12px] text-emerald-500 hover:underline">
+                <Link href="/notifications" className="text-xs text-emerald-500 hover:underline">
                   View all
                 </Link>
               </div>
@@ -117,9 +117,9 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
                           )}
                           {item.title}
                         </span>
-                        <span className="text-[11px] text-slate-500 shrink-0">{formatWhen(item.date)}</span>
+                        <span className="text-xs text-slate-500 shrink-0">{formatWhen(item.date)}</span>
                       </div>
-                      <p className="text-[12px] text-slate-400 leading-relaxed">{item.message}</p>
+                      <p className="text-xs text-slate-400 leading-relaxed">{item.message}</p>
                     </div>
                   ))
                 )}

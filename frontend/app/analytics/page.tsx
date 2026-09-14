@@ -42,7 +42,7 @@ export default function AnalyticsPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Insights</p>
+            <p className="typo-overline text-slate-400">Insights</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">
               Analytics
             </h1>
@@ -77,7 +77,7 @@ export default function AnalyticsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-              <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+              <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-emerald-400" /> Spend by category
                 {month ? ` · ${month.label}` : ''}
               </h3>
@@ -87,10 +87,10 @@ export default function AnalyticsPage() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={categoryBarData} barCategoryGap="28%">
-                      <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                      <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
-                        fontSize={11}
+                        fontSize={chartTheme.tickFontSize}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(v) => (v >= 1000 ? `Rs.${v / 1000}k` : `Rs.${v}`)}
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-              <h3 className="font-bold text-base text-slate-100 flex items-center gap-2">
+              <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-teal-400" /> Monthly savings
               </h3>
               <div className="h-72 w-full pt-2">
@@ -116,10 +116,10 @@ export default function AnalyticsPage() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthly} barCategoryGap="28%">
-                      <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                      <XAxis dataKey="month" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
-                        fontSize={11}
+                        fontSize={chartTheme.tickFontSize}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(v) => (v >= 1000 ? `Rs.${v / 1000}k` : `Rs.${v}`)}

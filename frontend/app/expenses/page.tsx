@@ -163,7 +163,7 @@ export default function ExpensesPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Accounts</p>
+            <p className="typo-overline text-slate-400">Accounts</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">Expenses</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Record spending with category, Need vs Want, and payment method. These entries are saved to your account.
@@ -270,19 +270,19 @@ export default function ExpensesPage() {
                       <p className="font-medium text-slate-100">{item.description}</p>
                       {item.subcategory && <p className="text-xs text-slate-500">{item.subcategory}</p>}
                       {item.recurring && (
-                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                        <span className="mt-1 inline-flex items-center gap-1 text-xs text-emerald-600">
                           <Repeat className="w-3 h-3" /> Recurring
                         </span>
                       )}
                     </td>
                     <td className="py-3.5">
-                      <span className="px-2.5 py-1 rounded-full bg-slate-950 text-slate-300 border border-slate-800 text-[11px] font-medium">
+                      <span className="px-2.5 py-1 rounded-full bg-slate-950 text-slate-300 border border-slate-800 text-xs font-medium">
                         {item.category}
                       </span>
                     </td>
                     <td className="py-3.5">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                           item.transactionType === 'NEED'
                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                             : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'

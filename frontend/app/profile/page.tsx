@@ -100,7 +100,7 @@ export default function ProfilePage() {
       <div className="space-y-8 max-w-4xl mx-auto">
         <div className="flex items-center justify-between p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Account</p>
+            <p className="typo-overline text-slate-400">Account</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">Financial profile</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Stored on your account. Used as context for the health score (declared income is a fallback if this month has none).

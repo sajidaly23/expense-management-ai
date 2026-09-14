@@ -77,7 +77,7 @@ export default function PredictionsPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Machine learning</p>
+            <p className="typo-overline text-slate-400">Machine learning</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">Expense forecasts</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Trains Linear Regression, Random Forest, and XGBoost on your expense history via the Python service on port 8000.
@@ -130,7 +130,7 @@ export default function PredictionsPage() {
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-semibold text-sm text-slate-100">{info.name}</span>
                         <span
-                          className={`px-2 py-0.5 text-[10px] font-semibold rounded ${
+                          className={`px-2 py-0.5 text-xs font-semibold rounded ${
                             isBest
                               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                               : 'bg-slate-800 text-slate-400'
@@ -193,10 +193,10 @@ export default function PredictionsPage() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={prediction.categoryPredictions} barCategoryGap="28%" barGap={6}>
-                      <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={11} tickLine={false} />
+                      <XAxis dataKey="category" stroke={chartTheme.axis} fontSize={chartTheme.tickFontSize} tickLine={false} />
                       <YAxis
                         stroke={chartTheme.axis}
-                        fontSize={11}
+                        fontSize={chartTheme.tickFontSize}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(v) => `Rs.${v / 1000}k`}
@@ -205,7 +205,7 @@ export default function PredictionsPage() {
                         contentStyle={tooltipStyle}
                         formatter={(val: number) => [`Rs. ${Number(val).toLocaleString()}`, '']}
                       />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      <Legend wrapperStyle={{ fontSize: `${chartTheme.legendFontSize}px` }} />
                       <Bar dataKey="previousAmount" fill={chartTheme.mutedBar} name="Last month actual" radius={[6, 6, 0, 0]} maxBarSize={40} />
                       <Bar dataKey="predictedAmount" fill={chartTheme.copper} name="Next month forecast" radius={[6, 6, 0, 0]} maxBarSize={40} />
                     </BarChart>

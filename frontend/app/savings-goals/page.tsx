@@ -123,7 +123,7 @@ export default function SavingsGoalsPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Planning</p>
+            <p className="typo-overline text-slate-400">Planning</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">Savings goals</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Required monthly saving is based on remaining amount and months until the deadline.
@@ -162,13 +162,13 @@ export default function SavingsGoalsPage() {
                 <div key={goal.id} className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-semibold text-base text-slate-100">{goal.name}</h3>
-                      <p className={`text-[11px] font-semibold uppercase tracking-wide mt-1 ${priorityClass(goal.priority)}`}>
+                      <h3 className="font-semibold text-lg text-slate-100">{goal.name}</h3>
+                      <p className={`text-xs font-semibold uppercase tracking-wide mt-1 ${priorityClass(goal.priority)}`}>
                         {goal.priority} priority
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusClass(goal.status)}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${statusClass(goal.status)}`}>
                         {goal.status}
                       </span>
                       <button onClick={() => openEdit(goal)} className="p-1.5 text-slate-500 hover:text-slate-100" title="Edit">

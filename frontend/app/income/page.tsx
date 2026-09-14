@@ -128,7 +128,7 @@ export default function IncomePage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div>
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Accounts</p>
+            <p className="typo-overline text-slate-400">Accounts</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">Income</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Record salary, freelance, and other earnings. These entries are saved to your account.
@@ -226,7 +226,7 @@ export default function IncomePage() {
                       {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
                     </td>
                     <td className="py-3.5">
-                      <span className="px-2.5 py-1 rounded-full bg-slate-950 text-emerald-500 border border-emerald-500/20 text-[11px] font-medium">
+                      <span className="px-2.5 py-1 rounded-full bg-slate-950 text-emerald-500 border border-emerald-500/20 text-xs font-medium">
                         {item.incomeType}
                       </span>
                     </td>

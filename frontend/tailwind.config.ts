@@ -95,6 +95,20 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "Georgia", "serif"],
       },
+      fontSize: {
+        overline: ["0.75rem", { lineHeight: "1rem" }],
+        xs: ["0.8125rem", { lineHeight: "1.25rem" }],
+        sm: ["0.9375rem", { lineHeight: "1.375rem" }],
+        base: ["1rem", { lineHeight: "1.625rem" }],
+        lg: ["1.125rem", { lineHeight: "1.75rem" }],
+        xl: ["1.25rem", { lineHeight: "1.75rem" }],
+        "2xl": ["1.75rem", { lineHeight: "2.125rem" }],
+        "3xl": ["2rem", { lineHeight: "2.375rem" }],
+        "4xl": ["2.25rem", { lineHeight: "2.5rem" }],
+      },
+      letterSpacing: {
+        overline: "0.14em",
+      },
       borderRadius: {
         "3xl": "0.875rem",
       },

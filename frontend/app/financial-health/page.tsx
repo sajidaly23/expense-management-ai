@@ -50,7 +50,7 @@ export default function FinancialHealthPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Diagnostics</p>
+            <p className="typo-overline text-slate-400">Diagnostics</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">Financial health</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Weighted 0–100 score from this month’s income, expenses, budgets, and savings goals.
@@ -93,7 +93,7 @@ export default function FinancialHealthPage() {
               </div>
 
               <div className="lg:col-span-2 p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-5">
-                <h3 className="font-semibold text-base text-slate-100 flex items-center gap-2">
+                <h3 className="font-semibold text-lg text-slate-100 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" /> Factor breakdown
                 </h3>
                 <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function FinancialHealthPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="font-semibold text-sm text-slate-100 flex items-center gap-2">
+                <h3 className="font-semibold text-base text-slate-100 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" /> How this was calculated
                 </h3>
                 <div className="space-y-2.5">
@@ -136,7 +136,7 @@ export default function FinancialHealthPage() {
               </div>
 
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="font-semibold text-sm text-slate-100 flex items-center gap-2">
+                <h3 className="font-semibold text-base text-slate-100 flex items-center gap-2">
                   <Compass className="w-4 h-4 text-teal-400" /> Recommendations
                 </h3>
                 <div className="space-y-2.5">

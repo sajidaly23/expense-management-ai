@@ -113,14 +113,14 @@ export default function ReportsPage() {
             <div className="bg-ink-900 px-8 py-6 text-white">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-emerald-400">SmartFin AI</p>
+                  <p className="typo-overline text-emerald-400">SmartFin AI</p>
                   <h2 className="text-2xl font-display font-semibold mt-1 text-white">Monthly Financial Statement</h2>
                   <p className="text-sm text-ink-100 mt-2">Prepared for {report.preparedFor}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-ink-300">Period</p>
+                  <p className="typo-overline text-ink-300">Period</p>
                   <p className="text-lg font-semibold text-white">{report.period.label} {year}</p>
-                  <p className="text-[11px] text-emerald-400 mt-2 font-semibold">CONFIDENTIAL</p>
+                  <p className="text-xs text-emerald-400 mt-2 font-semibold">CONFIDENTIAL</p>
                 </div>
               </div>
             </div>
@@ -129,15 +129,15 @@ export default function ReportsPage() {
             <div className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-emerald-400">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Income</p>
+                  <p className="typo-overline tracking-wider text-ink-400">Income</p>
                   <p className="text-xl font-semibold text-ink-900 mt-1">{formatRs(report.currentMonth.income)}</p>
                 </div>
                 <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-amber-500">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Expenses</p>
+                  <p className="typo-overline tracking-wider text-ink-400">Expenses</p>
                   <p className="text-xl font-semibold text-ink-900 mt-1">{formatRs(report.currentMonth.expense)}</p>
                 </div>
                 <div className="border border-ink-100 rounded-lg p-4 border-l-4 border-l-purple-400">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Net savings</p>
+                  <p className="typo-overline tracking-wider text-ink-400">Net savings</p>
                   <p className="text-xl font-semibold text-ink-900 mt-1">
                     {formatRs(report.currentMonth.savings)}
                     <span className="text-sm font-medium text-ink-400 ml-2">({report.currentMonth.savingsRate}%)</span>
@@ -146,7 +146,7 @@ export default function ReportsPage() {
               </div>
 
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
+                <h3 className="typo-overline text-ink-400 border-b border-ink-100 pb-2 mb-3">
                   Spending by category
                 </h3>
                 {report.currentMonth.byCategory.length === 0 ? (
@@ -176,7 +176,7 @@ export default function ReportsPage() {
               </section>
 
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
+                <h3 className="typo-overline text-ink-400 border-b border-ink-100 pb-2 mb-3">
                   Budgets
                 </h3>
                 {report.budgets.length === 0 ? (
@@ -209,7 +209,7 @@ export default function ReportsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="border border-ink-100 rounded-lg p-4 bg-ink-50">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Next-month forecast</p>
+                  <p className="typo-overline tracking-wider text-ink-400">Next-month forecast</p>
                   {report.prediction ? (
                     <>
                       <p className="text-xl font-semibold text-purple-500 mt-1">{formatRs(report.prediction.predictedAmount)}</p>
@@ -222,7 +222,7 @@ export default function ReportsPage() {
                   )}
                 </div>
                 <div className="border border-ink-100 rounded-lg p-4 bg-ink-50">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">Financial health</p>
+                  <p className="typo-overline tracking-wider text-ink-400">Financial health</p>
                   {report.health ? (
                     <div className="mt-2 flex items-center gap-3">
                       <p className="text-xl font-semibold text-ink-900">{report.health.overallScore} / 100</p>
@@ -238,7 +238,7 @@ export default function ReportsPage() {
 
               {report.goals.length > 0 && (
                 <section>
-                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 border-b border-ink-100 pb-2 mb-3">
+                  <h3 className="typo-overline text-ink-400 border-b border-ink-100 pb-2 mb-3">
                     Savings goals
                   </h3>
                   <table className="w-full text-sm text-ink-900">
@@ -265,7 +265,7 @@ export default function ReportsPage() {
               )}
 
               <section className="bg-ink-50 border border-ink-100 rounded-lg p-4">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400 mb-2">
+                <h3 className="typo-overline text-ink-400 mb-2">
                   Executive summary
                 </h3>
                 <p className="text-sm leading-relaxed text-ink-700">{report.executiveSummary}</p>

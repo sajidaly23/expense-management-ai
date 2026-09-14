@@ -66,7 +66,7 @@ export default function AnomaliesPage() {
       <div className="space-y-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold tracking-[0.14em] uppercase text-slate-400">Machine learning</p>
+            <p className="typo-overline text-slate-400">Machine learning</p>
             <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100">Unusual spend</h1>
             <p className="text-slate-400 text-xs md:text-sm">
               Isolation Forest on port 8000 flags expenses that look unusual against your own history.
@@ -132,7 +132,7 @@ export default function AnomaliesPage() {
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-base text-slate-100">{anom.expenseDescription}</h3>
+                      <h3 className="font-semibold text-lg text-slate-100">{anom.expenseDescription}</h3>
                       <p className="text-xs text-slate-400">
                         {anom.category} · {new Date(anom.detectedAt).toLocaleString()}
                       </p>

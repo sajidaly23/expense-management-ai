@@ -201,7 +201,7 @@ export default function AIAssistantPage() {
             <button
               type="button"
               onClick={() => setUseOllama(!useOllama)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all ${
+              className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
                 useOllama ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
               }`}
             >
@@ -254,7 +254,7 @@ export default function AIAssistantPage() {
                     : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-tl-none'
                 }`}>
                   <p className="leading-relaxed whitespace-pre-wrap">{message.text}</p>
-                  <div className={`flex items-center justify-between text-[10px] pt-1 ${message.sender === 'user' ? 'text-slate-900/80' : 'text-slate-500'}`}>
+                  <div className={`flex items-center justify-between text-xs pt-1 ${message.sender === 'user' ? 'text-slate-900/80' : 'text-slate-500'}`}>
                     <span>{message.timestamp}</span>
                     {message.source && <span className="font-mono">{message.source}</span>}
                   </div>
