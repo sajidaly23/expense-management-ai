@@ -13,6 +13,17 @@ export type MonthlyPoint = {
   savings: number;
 };
 
+export type BudgetVariance = {
+  id: string;
+  category: string | null;
+  budgeted: number;
+  actual: number;
+  variance: number;
+  variancePercent: number;
+  utilization: number;
+  status: 'under' | 'on_track' | 'over';
+};
+
 export type SummaryResponse = {
   status: string;
   currentMonth: {
@@ -30,6 +41,7 @@ export type SummaryResponse = {
   };
   monthly: MonthlyPoint[];
   byCategory: CategoryTotal[];
+  budgetVariance: BudgetVariance[];
 };
 
 export const summaryService = {

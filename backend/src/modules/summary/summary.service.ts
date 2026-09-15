@@ -3,6 +3,7 @@ import { AppError } from '../../utils/AppError.js';
 import { isDatabaseConnected } from '../../config/db.js';
 import { Income } from '../income/income.model.js';
 import { Expense } from '../expense/expense.model.js';
+import { listBudgets } from '../budget/budget.service.js';
 
 export type CategoryTotal = {
   category: string;
@@ -15,6 +16,17 @@ export type MonthlyPoint = {
   income: number;
   expense: number;
   savings: number;
+};
+
+export type BudgetVariance = {
+  id: string;
+  category: string | null;
+  budgeted: number;
+  actual: number;
+  variance: number;
+  variancePercent: number;
+  utilization: number;
+  status: 'under' | 'on_track' | 'over';
 };
 
 function assertDatabase() {
@@ -133,6 +145,27 @@ export async function getSummary(userId: string, months = 6, month?: string) {
       .map(([category, amount]) => ({ category, amount }))
       .sort((a, b) => b.amount - a.amount);
 
+  const budgetResult = await listBudgets(userId, { month: currentKey });
+  const budgetVariance: BudgetVariance[] = budgetResult.budgets.map((budget) => {
+    const variance = budget.spent - budget.amount;
+    const variancePercent =
+      budget.amount === 0 ? (budget.spent > 0 ? 100 : 0) : Number(((variance / budget.amount) * 100).toFixed(1));
+    let status: BudgetVariance['status'] = 'on_track';
+    if (budget.utilization > 100) status = 'over';
+    else if (budget.utilization < 80) status = 'under';
+
+    return {
+      id: budget.id,
+      category: budget.category || null,
+      budgeted: budget.amount,
+      actual: budget.spent,
+      variance,
+      variancePercent,
+      utilization: budget.utilization,
+      status,
+    };
+  });
+
   return {
     currentMonth: {
       key: currentKey,
@@ -149,5 +182,6 @@ export async function getSummary(userId: string, months = 6, month?: string) {
     },
     monthly,
     byCategory: toCategoryList(categoryAll),
+    budgetVariance,
   };
 }

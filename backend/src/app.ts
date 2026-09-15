@@ -17,6 +17,8 @@ import assistantRoutes from './modules/assistant/assistant.routes.js';
 import importRoutes from './modules/import/import.routes.js';
 import reportRoutes from './modules/report/report.routes.js';
 import notificationRoutes from './modules/notification/notification.routes.js';
+import recurringRoutes from './modules/recurring/recurring.routes.js';
+import recommendationsRoutes from './modules/recommendations/recommendations.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -81,6 +83,8 @@ app.get('/', (_req, res) => {
     import: '/api/import',
     reports: '/api/reports',
     notifications: '/api/notifications',
+    recurring: '/api/recurring',
+    recommendations: '/api/recommendations',
     admin: '/api/admin',
     status: 'ACTIVE',
   });
@@ -101,6 +105,8 @@ app.use('/api/assistant', assistantRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/recurring', recurringRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(notFoundHandler);

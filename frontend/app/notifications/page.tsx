@@ -86,7 +86,7 @@ export default function NotificationsPage() {
               <Bell className="w-3.5 h-3.5" /> Notification Center
             </div>
             <h1 className="text-2xl font-display font-semibold text-slate-100 mt-1">Notifications</h1>
-            <p className="text-xs text-slate-400 mt-1">Created from budget overruns and unresolved anomalies.</p>
+            <p className="text-xs text-slate-400 mt-1">Budget alerts, goal progress, health score, forecasts, and anomalies.</p>
           </div>
 
           <button
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
         {loading ? (
           <p className="text-sm text-slate-400">Loading notifications…</p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-slate-400">No budget overruns or unresolved anomalies right now.</p>
+          <p className="text-sm text-slate-400">No alerts right now. You are all caught up.</p>
         ) : (
           <div className="space-y-3">
             {items.map((item) => (
@@ -125,7 +125,11 @@ export default function NotificationsPage() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-bold text-slate-100 text-sm flex items-center gap-2">
-                    {item.type === 'budget' || item.type === 'anomaly' ? <AlertCircle className="w-4 h-4 text-amber-400" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                    {item.type === 'budget' || item.type === 'anomaly' || item.type === 'health' || item.type === 'prediction' ? (
+                      <AlertCircle className={`w-4 h-4 ${item.type === 'health' ? 'text-rose-400' : item.type === 'prediction' ? 'text-blue-400' : 'text-amber-400'}`} />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    )}
                     {item.title}
                     {!item.read && (
                       <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-400 border border-emerald-500/20">

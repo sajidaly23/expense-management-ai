@@ -1,6 +1,7 @@
 import app from './src/app.js';
 import { config } from './src/config/env.js';
 import { connectDatabase } from './src/config/db.js';
+import { startRecurringScheduler } from './src/jobs/recurringScheduler.js';
 import mongoose from 'mongoose';
 
 async function startServer() {
@@ -12,6 +13,11 @@ async function startServer() {
         'MongoDB connection failed. Auth routes will return 503 until the database is reachable.',
         dbError instanceof Error ? dbError.message : dbError
       );
+    }
+
+    let stopRecurringScheduler: (() => void) | undefined;
+    if (config.nodeEnv !== 'test') {
+      stopRecurringScheduler = startRecurringScheduler();
     }
 
     const server = app.listen(config.port, () => {
@@ -30,6 +36,8 @@ async function startServer() {
       console.log(`Assist:  http://localhost:${config.port}/api/assistant`);
       console.log(`Reports: http://localhost:${config.port}/api/reports`);
       console.log(`Notify:  http://localhost:${config.port}/api/notifications`);
+      console.log(`Recurring: http://localhost:${config.port}/api/recurring`);
+      console.log(`Recommendations: http://localhost:${config.port}/api/recommendations`);
       console.log(`Admin:   http://localhost:${config.port}/api/admin`);
     });
 
@@ -43,6 +51,7 @@ async function startServer() {
 
     const shutdown = async () => {
       console.log('Shutting down SmartFin AI Backend server...');
+      stopRecurringScheduler?.();
       server.close(async () => {
         if (mongoose.connection.readyState === 1) {
           await mongoose.disconnect();

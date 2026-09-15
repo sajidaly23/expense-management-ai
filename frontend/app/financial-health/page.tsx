@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
-import { FinancialHealthScore } from '../../types';
-import { ShieldCheck, CheckCircle2, ArrowRight, Compass } from 'lucide-react';
+import { EmergencyFundPlan, FinancialHealthScore } from '../../types';
+import { ShieldCheck, CheckCircle2, ArrowRight, Compass, Umbrella } from 'lucide-react';
+import Link from 'next/link';
 import { scoreService } from '../../services/score.service';
 import { ApiError } from '../../lib/api';
 
@@ -15,6 +16,7 @@ function statusClass(status: FinancialHealthScore['status']) {
 
 export default function FinancialHealthPage() {
   const [score, setScore] = useState<FinancialHealthScore | null>(null);
+  const [emergencyPlan, setEmergencyPlan] = useState<EmergencyFundPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -22,8 +24,12 @@ export default function FinancialHealthPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await scoreService.get();
-      setScore(res.score);
+      const [scoreRes, planRes] = await Promise.all([
+        scoreService.get(),
+        scoreService.getEmergencyFund(),
+      ]);
+      setScore(scoreRes.score);
+      setEmergencyPlan(planRes.plan);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load health score.');
     } finally {
@@ -116,6 +122,56 @@ export default function FinancialHealthPage() {
                 </div>
               </div>
             </div>
+
+            {emergencyPlan && (
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-5">
+                <h3 className="font-semibold text-lg text-slate-100 flex items-center gap-2">
+                  <Umbrella className="w-5 h-5 text-purple-400" /> Emergency fund planner
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Current balance</p>
+                    <p className="text-xl font-semibold text-slate-100 mt-1">Rs. {emergencyPlan.currentBalance.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Months covered</p>
+                    <p className="text-xl font-semibold text-slate-100 mt-1">{emergencyPlan.monthsCovered} / {emergencyPlan.targetMonths}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Target (6 mo.)</p>
+                    <p className="text-xl font-semibold text-slate-100 mt-1">Rs. {emergencyPlan.targetAmount.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Status</p>
+                    <p className="text-xl font-semibold text-purple-400 mt-1">{emergencyPlan.status}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-slate-400">Progress toward 6-month reserve</span>
+                    <span className="text-slate-100">{emergencyPlan.progressPercent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-purple-500" style={{ width: `${emergencyPlan.progressPercent}%` }} />
+                  </div>
+                </div>
+                {emergencyPlan.recommendations.length > 0 && (
+                  <div className="space-y-2">
+                    {emergencyPlan.recommendations.map((rec, idx) => (
+                      <p key={idx} className="text-xs text-slate-400 flex items-start gap-2">
+                        <ArrowRight className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+                        {rec}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                {!emergencyPlan.goalId && (
+                  <Link href="/savings-goals" className="inline-flex text-sm text-emerald-500 hover:underline">
+                    Create an Emergency Fund goal →
+                  </Link>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">

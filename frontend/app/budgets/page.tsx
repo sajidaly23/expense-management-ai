@@ -6,7 +6,9 @@ import AppLayout from '../../components/layout/AppLayout';
 import { Budget, ExpenseCategory } from '../../types';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { budgetService } from '../../services/budget.service';
+import { summaryService, BudgetVariance } from '../../services/summary.service';
 import { ApiError } from '../../lib/api';
+import { BarChart3 } from 'lucide-react';
 
 const CATEGORIES: ExpenseCategory[] = [
   'Food',
@@ -52,6 +54,7 @@ function utilLabel(util: number) {
 export default function BudgetsPage() {
   const [month, setMonth] = useState(currentMonth());
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [variance, setVariance] = useState<BudgetVariance[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -64,8 +67,12 @@ export default function BudgetsPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await budgetService.list(selectedMonth);
-      setBudgets(res.budgets);
+      const [budgetRes, summaryRes] = await Promise.all([
+        budgetService.list(selectedMonth),
+        summaryService.get(1, selectedMonth),
+      ]);
+      setBudgets(budgetRes.budgets);
+      setVariance(summaryRes.budgetVariance || []);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load budgets.');
     } finally {
@@ -212,6 +219,52 @@ export default function BudgetsPage() {
             ) : (
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-400">
                 No overall budget for this month. Add one to track total spend against a limit.
+              </div>
+            )}
+
+            {variance.length > 0 && (
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-teal-400" /> Budget vs actual variance
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-xs text-slate-400 uppercase tracking-wider">
+                        <th className="pb-2 pr-4 font-semibold">Category</th>
+                        <th className="pb-2 pr-4 font-semibold">Budgeted</th>
+                        <th className="pb-2 pr-4 font-semibold">Actual</th>
+                        <th className="pb-2 pr-4 font-semibold">Variance</th>
+                        <th className="pb-2 font-semibold">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {variance.map((row) => (
+                        <tr key={row.id}>
+                          <td className="py-3 pr-4 text-slate-200">{row.category || 'Overall'}</td>
+                          <td className="py-3 pr-4 text-slate-300">Rs. {row.budgeted.toLocaleString()}</td>
+                          <td className="py-3 pr-4 text-slate-300">Rs. {row.actual.toLocaleString()}</td>
+                          <td className={`py-3 pr-4 font-medium ${row.variance > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                            {row.variance > 0 ? '+' : ''}Rs. {row.variance.toLocaleString()} ({row.variancePercent}%)
+                          </td>
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-0.5 rounded text-xs font-semibold border ${
+                                row.status === 'over'
+                                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                  : row.status === 'under'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              }`}
+                            >
+                              {row.status === 'over' ? 'Over' : row.status === 'under' ? 'Under' : 'On track'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

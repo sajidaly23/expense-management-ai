@@ -217,6 +217,84 @@ function goalProgressScore(goals: PublicGoal[]) {
   return { points, explanations, recommendations };
 }
 
+export type EmergencyFundPlan = {
+  currentBalance: number;
+  targetMonths: number;
+  avgMonthlyExpense: number;
+  targetAmount: number;
+  monthsCovered: number;
+  amountNeeded: number;
+  progressPercent: number;
+  status: 'Not started' | 'Building' | 'Adequate' | 'Fully funded';
+  goalId: string | null;
+  goalName: string | null;
+  recommendations: string[];
+};
+
+export async function getEmergencyFundPlan(userId: string): Promise<EmergencyFundPlan> {
+  assertDatabase();
+
+  const [summary, goalResult] = await Promise.all([
+    getSummary(userId, 6),
+    listGoals(userId),
+  ]);
+
+  const last3 = summary.monthly.slice(-3);
+  const avgMonthlyExpense =
+    last3.length === 0 ? 0 : last3.reduce((sum, row) => sum + row.expense, 0) / last3.length;
+
+  const targetMonths = 6;
+  const emergencyGoals = goalResult.goals.filter((goal) => /emergency/i.test(goal.name));
+  const primaryGoal = emergencyGoals[0] || null;
+  const currentBalance = emergencyGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const targetAmount = avgMonthlyExpense > 0 ? Math.ceil(avgMonthlyExpense * targetMonths) : primaryGoal?.targetAmount || 0;
+  const monthsCovered = avgMonthlyExpense > 0 ? currentBalance / avgMonthlyExpense : currentBalance > 0 ? targetMonths : 0;
+  const amountNeeded = Math.max(0, targetAmount - currentBalance);
+  const progressPercent = targetAmount === 0 ? 0 : Math.min(100, Math.round((currentBalance / targetAmount) * 100));
+
+  let status: EmergencyFundPlan['status'] = 'Not started';
+  if (currentBalance <= 0 && emergencyGoals.length === 0) {
+    status = 'Not started';
+  } else if (monthsCovered >= targetMonths) {
+    status = 'Fully funded';
+  } else if (monthsCovered >= 3) {
+    status = 'Adequate';
+  } else {
+    status = 'Building';
+  }
+
+  const recommendations: string[] = [];
+  if (emergencyGoals.length === 0) {
+    recommendations.push('Create a savings goal named "Emergency Fund" to track your reserve.');
+  }
+  if (amountNeeded > 0 && avgMonthlyExpense > 0) {
+    recommendations.push(`Add ${formatRs(amountNeeded)} to reach ${targetMonths} months of expenses (${formatRs(avgMonthlyExpense)}/month average).`);
+    const monthlyContribution = Math.ceil(amountNeeded / Math.max(1, targetMonths - monthsCovered));
+    recommendations.push(`Save about ${formatRs(monthlyContribution)}/month to reach the target within ${Math.max(1, Math.ceil(targetMonths - monthsCovered))} months.`);
+  }
+  if (monthsCovered >= targetMonths) {
+    recommendations.push('Your emergency fund meets the 6-month target. Consider directing surplus to other goals.');
+  }
+
+  return {
+    currentBalance,
+    targetMonths,
+    avgMonthlyExpense: Math.round(avgMonthlyExpense),
+    targetAmount,
+    monthsCovered: Number(monthsCovered.toFixed(1)),
+    amountNeeded,
+    progressPercent,
+    status,
+    goalId: primaryGoal?.id || null,
+    goalName: primaryGoal?.name || null,
+    recommendations,
+  };
+}
+
+function formatRs(amount: number) {
+  return `Rs. ${Math.round(amount).toLocaleString('en-US')}`;
+}
+
 export async function getHealthScore(userId: string): Promise<PublicHealthScore> {
   assertDatabase();
 

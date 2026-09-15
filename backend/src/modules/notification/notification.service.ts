@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 import { AppError } from '../../utils/AppError.js';
 import { isDatabaseConnected } from '../../config/db.js';
 import { listBudgets } from '../budget/budget.service.js';
+import { listGoals } from '../goal/goal.service.js';
+import { getHealthScore } from '../score/score.service.js';
+import { getLatestPrediction } from '../prediction/prediction.service.js';
 import { Anomaly } from '../anomaly/anomaly.model.js';
 import { INotification, Notification, NotificationType } from './notification.model.js';
 
@@ -62,8 +65,11 @@ async function upsertNotice(
 }
 
 async function syncFromLiveData(userId: string) {
-  const [budgetResult, unresolved] = await Promise.all([
+  const [budgetResult, goalResult, health, predictionResult, unresolved] = await Promise.all([
     listBudgets(userId, {}),
+    listGoals(userId),
+    getHealthScore(userId).catch(() => null),
+    getLatestPrediction(userId).catch(() => null),
     Anomaly.find({ userId, status: 'UNRESOLVED' }).sort({ detectedAt: -1 }),
   ]);
 
@@ -77,6 +83,84 @@ async function syncFromLiveData(userId: string) {
       `${label} is at ${budget.utilization}% utilization (${formatRs(budget.spent)} spent of ${formatRs(budget.amount)} for ${budget.month}).`,
       'budget'
     );
+  }
+
+  for (const goal of goalResult.goals) {
+    if (goal.status === 'OVERDUE') {
+      await upsertNotice(
+        userId,
+        `goal:overdue:${goal.id}`,
+        `Goal overdue: ${goal.name}`,
+        `${formatRs(goal.remaining)} remaining. Pace needed: ${formatRs(goal.requiredMonthly)}/month to reach ${goal.deadline}.`,
+        'goal'
+      );
+      continue;
+    }
+    if (goal.status === 'COMPLETED') {
+      await upsertNotice(
+        userId,
+        `goal:completed:${goal.id}`,
+        `Goal achieved: ${goal.name}`,
+        `You reached ${formatRs(goal.targetAmount)}. Congratulations!`,
+        'goal'
+      );
+      continue;
+    }
+    const pct = goal.targetAmount === 0 ? 0 : Math.round((goal.currentAmount / goal.targetAmount) * 100);
+    for (const milestone of [25, 50, 75]) {
+      if (pct >= milestone) {
+        await upsertNotice(
+          userId,
+          `goal:milestone:${goal.id}:${milestone}`,
+          `${goal.name} — ${milestone}% funded`,
+          `${formatRs(goal.currentAmount)} of ${formatRs(goal.targetAmount)} saved. ${formatRs(goal.remaining)} to go.`,
+          'goal'
+        );
+      }
+    }
+  }
+
+  if (health) {
+    if (health.overallScore < 45) {
+      await upsertNotice(
+        userId,
+        'health:at-risk',
+        'Financial health at risk',
+        `Score is ${health.overallScore}/100 (${health.status}). ${health.recommendations[0] || 'Review your budgets and savings.'}`,
+        'health'
+      );
+    } else if (health.overallScore < 65) {
+      await upsertNotice(
+        userId,
+        'health:moderate',
+        'Financial health needs attention',
+        `Score is ${health.overallScore}/100 (${health.status}). ${health.recommendations[0] || 'Improve savings rate or budget adherence.'}`,
+        'health'
+      );
+    }
+  }
+
+  if (predictionResult) {
+    const pred = predictionResult;
+    if (pred.changePercentage > 15) {
+      await upsertNotice(
+        userId,
+        `prediction:rise:${pred.id}`,
+        'Forecast: spending may increase',
+        `Next month predicted at ${formatRs(pred.predictedAmount)} (+${pred.changePercentage}% vs last month).`,
+        'prediction'
+      );
+    }
+    const overallBudget = budgetResult.budgets.find((b) => !b.category);
+    if (overallBudget && pred.predictedAmount > overallBudget.amount) {
+      await upsertNotice(
+        userId,
+        `prediction:budget:${pred.id}`,
+        'Forecast exceeds monthly budget',
+        `Predicted ${formatRs(pred.predictedAmount)} vs your ${formatRs(overallBudget.amount)} overall budget.`,
+        'prediction'
+      );
+    }
   }
 
   for (const item of unresolved) {

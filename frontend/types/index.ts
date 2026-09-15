@@ -148,9 +148,24 @@ export interface AIInsight {
   id: string;
   title: string;
   description: string;
-  category: 'spending' | 'budget' | 'savings' | 'prediction' | 'anomaly';
+  category: 'spending' | 'budget' | 'savings' | 'prediction' | 'anomaly' | 'planning';
   type: 'warning' | 'tip' | 'positive';
-  createdAt: string;
+  priority?: number;
+  createdAt?: string;
+}
+
+export interface EmergencyFundPlan {
+  currentBalance: number;
+  targetMonths: number;
+  avgMonthlyExpense: number;
+  targetAmount: number;
+  monthsCovered: number;
+  amountNeeded: number;
+  progressPercent: number;
+  status: 'Not started' | 'Building' | 'Adequate' | 'Fully funded';
+  goalId: string | null;
+  goalName: string | null;
+  recommendations: string[];
 }
 
 export interface NotificationItem {

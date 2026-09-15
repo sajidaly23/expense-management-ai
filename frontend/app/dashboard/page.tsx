@@ -13,6 +13,9 @@ import {
   Plus,
   ShieldAlert,
   ChevronRight,
+  Lightbulb,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -33,7 +36,8 @@ import { scoreService } from '../../services/score.service';
 import { predictionService } from '../../services/prediction.service';
 import { anomalyService } from '../../services/anomaly.service';
 import { ApiError } from '../../lib/api';
-import { Anomaly, FinancialHealthScore, Prediction } from '../../types';
+import { AIInsight, Anomaly, FinancialHealthScore, Prediction } from '../../types';
+import { recommendationsService } from '../../services/recommendations.service';
 
 const thisMonth = () => new Date().toISOString().slice(0, 7);
 
@@ -44,18 +48,21 @@ export default function DashboardPage() {
   const [score, setScore] = useState<FinancialHealthScore | null>(null);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [recommendations, setRecommendations] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const loadSidecars = async () => {
-    const [scoreResult, predictionResult, anomalyResult] = await Promise.allSettled([
+    const [scoreResult, predictionResult, anomalyResult, recResult] = await Promise.allSettled([
       scoreService.get(),
       predictionService.get(),
       anomalyService.list(),
+      recommendationsService.list(),
     ]);
     setScore(scoreResult.status === 'fulfilled' ? scoreResult.value.score : null);
     setPrediction(predictionResult.status === 'fulfilled' ? predictionResult.value.prediction : null);
     setAnomalies(anomalyResult.status === 'fulfilled' ? anomalyResult.value.anomalies : []);
+    setRecommendations(recResult.status === 'fulfilled' ? recResult.value.recommendations : []);
   };
 
   const loadSummary = async (monthKey = selectedMonth) => {
@@ -155,6 +162,40 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-400">Loading dashboard…</p>
         ) : (
           <>
+            {recommendations.length > 0 && (
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-amber-400" /> Smart recommendations
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {recommendations.slice(0, 4).map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-lg border text-sm ${
+                        item.type === 'warning'
+                          ? 'bg-amber-500/5 border-amber-500/20 text-slate-200'
+                          : item.type === 'positive'
+                            ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-200'
+                            : 'bg-slate-950/60 border-slate-800 text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {item.type === 'warning' ? (
+                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        ) : (
+                          <Info className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                        )}
+                        <div>
+                          <p className="font-semibold text-slate-100">{item.title}</p>
+                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
