@@ -70,6 +70,8 @@ class StatementPdf {
     this.drawCoverHeader();
     this.drawKpis();
     this.drawCategoryTable();
+    this.drawIncomeDetails();
+    this.drawExpenseDetails();
     this.drawBudgetTable();
     this.drawOutlook();
     this.drawGoals();
@@ -244,6 +246,28 @@ class StatementPdf {
       `${((row.amount / total) * 100).toFixed(1)}%`,
     ]);
     this.drawTable(['Category', 'Amount', 'Share of spend'], rows, [250, 160, 122]);
+  }
+
+  private drawIncomeDetails() {
+    this.sectionTitle('Income details');
+    const rows = this.report.incomes.map((row) => [
+      row.date,
+      row.source,
+      row.incomeType,
+      formatRs(row.amount),
+    ]);
+    this.drawTable(['Date', 'Source', 'Type', 'Amount'], rows, [90, 170, 120, 152]);
+  }
+
+  private drawExpenseDetails() {
+    this.sectionTitle('Expense details');
+    const rows = this.report.expenses.map((row) => [
+      row.date,
+      row.category,
+      row.description.slice(0, 28),
+      formatRs(row.amount),
+    ]);
+    this.drawTable(['Date', 'Category', 'Description', 'Amount'], rows, [90, 100, 190, 152]);
   }
 
   private drawBudgetTable() {

@@ -1,11 +1,43 @@
+import mongoose from 'mongoose';
 import { getSummary } from '../summary/summary.service.js';
 import { listBudgets, PublicBudget } from '../budget/budget.service.js';
 import { listGoals } from '../goal/goal.service.js';
 import { getProfile } from '../profile/profile.service.js';
 import { getHealthScore, PublicHealthScore } from '../score/score.service.js';
 import { getLatestPrediction, PublicPrediction } from '../prediction/prediction.service.js';
+import { listIncomes } from '../income/income.service.js';
+import { listExpenses } from '../expense/expense.service.js';
+import { Income } from '../income/income.model.js';
+import { Expense } from '../expense/expense.model.js';
 import { AppError } from '../../utils/AppError.js';
 import { isDatabaseConnected } from '../../config/db.js';
+
+export type ReportMonthOption = {
+  key: string;
+  label: string;
+  income: number;
+  expense: number;
+  savings: number;
+};
+
+export type ReportIncomeRow = {
+  id: string;
+  date: string;
+  source: string;
+  incomeType: string;
+  amount: number;
+  description?: string;
+};
+
+export type ReportExpenseRow = {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  paymentMethod: string;
+  transactionType: string;
+};
 
 export type PublicReport = {
   preparedFor: string;
@@ -17,6 +49,8 @@ export type PublicReport = {
     savingsRate: number;
     byCategory: { category: string; amount: number }[];
   };
+  incomes: ReportIncomeRow[];
+  expenses: ReportExpenseRow[];
   prediction: PublicPrediction | null;
   health: PublicHealthScore | null;
   budgets: PublicBudget[];
@@ -39,6 +73,92 @@ function assertDatabase() {
 
 function formatRs(amount: number) {
   return `Rs. ${Math.round(amount).toLocaleString('en-US')}`;
+}
+
+function monthKeyFromDate(value: Date) {
+  return value.toISOString().slice(0, 7);
+}
+
+function monthLabel(monthKey: string) {
+  const date = new Date(`${monthKey}-01T00:00:00.000Z`);
+  return date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+}
+
+function monthRange(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 1));
+  return {
+    from: start.toISOString().slice(0, 10),
+    to: new Date(end.getTime() - 86400000).toISOString().slice(0, 10),
+  };
+}
+
+function resolveMonthKey(month?: string) {
+  const current = monthKeyFromDate(new Date());
+  if (!month) return current;
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    throw new AppError('Use a valid month (YYYY-MM).', 400);
+  }
+  const monthNum = Number(month.slice(5, 7));
+  if (monthNum < 1 || monthNum > 12) {
+    throw new AppError('Use a valid month (YYYY-MM).', 400);
+  }
+  return month;
+}
+
+export async function listReportMonths(userId: string): Promise<ReportMonthOption[]> {
+  assertDatabase();
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new AppError('User not found.', 404);
+  }
+
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const [incomeMonths, expenseMonths] = await Promise.all([
+    Income.aggregate<{ _id: string; total: number }>([
+      { $match: { userId: userObjectId } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$date', timezone: 'UTC' } },
+          total: { $sum: '$amount' },
+        },
+      },
+    ]),
+    Expense.aggregate<{ _id: string; total: number }>([
+      { $match: { userId: userObjectId } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$date', timezone: 'UTC' } },
+          total: { $sum: '$amount' },
+        },
+      },
+    ]),
+  ]);
+
+  const map = new Map<string, { income: number; expense: number }>();
+  for (const row of incomeMonths) {
+    map.set(row._id, { income: row.total, expense: 0 });
+  }
+  for (const row of expenseMonths) {
+    const existing = map.get(row._id) || { income: 0, expense: 0 };
+    existing.expense = row.total;
+    map.set(row._id, existing);
+  }
+
+  const currentKey = monthKeyFromDate(new Date());
+  if (!map.has(currentKey)) {
+    map.set(currentKey, { income: 0, expense: 0 });
+  }
+
+  return [...map.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, totals]) => ({
+      key,
+      label: monthLabel(key),
+      income: Math.round(totals.income),
+      expense: Math.round(totals.expense),
+      savings: Math.round(totals.income - totals.expense),
+    }));
 }
 
 function buildExecutiveSummary(report: Omit<PublicReport, 'executiveSummary'>): string {
@@ -74,20 +194,27 @@ function buildExecutiveSummary(report: Omit<PublicReport, 'executiveSummary'>): 
   return parts.join(' ');
 }
 
-export async function buildReport(userId: string): Promise<PublicReport> {
+export async function buildReport(userId: string, month?: string): Promise<PublicReport> {
   assertDatabase();
-  const [profile, summary, budgetResult, goalResult, prediction, health] = await Promise.all([
-    getProfile(userId),
-    getSummary(userId, 6),
-    listBudgets(userId, {}),
-    listGoals(userId),
-    getLatestPrediction(userId),
-    getHealthScore(userId),
-  ]);
+  const monthKey = resolveMonthKey(month);
+  const range = monthRange(monthKey);
+  const isCurrentMonth = monthKey === monthKeyFromDate(new Date());
+
+  const [profile, summary, budgetResult, goalResult, prediction, health, incomeResult, expenseResult] =
+    await Promise.all([
+      getProfile(userId),
+      getSummary(userId, 1, monthKey),
+      listBudgets(userId, { month: monthKey }),
+      listGoals(userId),
+      isCurrentMonth ? getLatestPrediction(userId) : Promise.resolve(null),
+      isCurrentMonth ? getHealthScore(userId) : Promise.resolve(null),
+      listIncomes(userId, { from: range.from, to: range.to }),
+      listExpenses(userId, { from: range.from, to: range.to }),
+    ]);
 
   const draft = {
     preparedFor: profile.name,
-    period: { key: summary.currentMonth.key, label: summary.currentMonth.label },
+    period: { key: monthKey, label: summary.currentMonth.label },
     currentMonth: {
       income: summary.currentMonth.income,
       expense: summary.currentMonth.expense,
@@ -95,6 +222,23 @@ export async function buildReport(userId: string): Promise<PublicReport> {
       savingsRate: summary.currentMonth.savingsRate,
       byCategory: summary.currentMonth.byCategory,
     },
+    incomes: incomeResult.incomes.map((row) => ({
+      id: row.id,
+      date: row.date,
+      source: row.source,
+      incomeType: row.incomeType,
+      amount: row.amount,
+      description: row.description,
+    })),
+    expenses: expenseResult.expenses.map((row) => ({
+      id: row.id,
+      date: row.date,
+      category: row.category,
+      description: row.description,
+      amount: row.amount,
+      paymentMethod: row.paymentMethod,
+      transactionType: row.transactionType,
+    })),
     prediction,
     health,
     budgets: budgetResult.budgets,
@@ -239,6 +383,60 @@ export function buildExcelBuffer(report: PublicReport): Buffer {
         { type: 'String', value: report.health.status },
       ])
     );
+  }
+
+  rows.push(excelRow([]));
+  rows.push(
+    excelRow([
+      { type: 'String', value: 'Date' },
+      { type: 'String', value: 'Source' },
+      { type: 'String', value: 'Type' },
+      { type: 'String', value: 'Amount' },
+      { type: 'String', value: 'Description' },
+    ])
+  );
+  if (report.incomes.length === 0) {
+    rows.push(excelRow([{ type: 'String', value: 'No income records for this month.' }]));
+  } else {
+    for (const row of report.incomes) {
+      rows.push(
+        excelRow([
+          { type: 'String', value: row.date },
+          { type: 'String', value: row.source },
+          { type: 'String', value: row.incomeType },
+          { type: 'Number', value: row.amount },
+          { type: 'String', value: row.description || '' },
+        ])
+      );
+    }
+  }
+
+  rows.push(excelRow([]));
+  rows.push(
+    excelRow([
+      { type: 'String', value: 'Date' },
+      { type: 'String', value: 'Category' },
+      { type: 'String', value: 'Description' },
+      { type: 'String', value: 'Payment' },
+      { type: 'String', value: 'Need/Want' },
+      { type: 'String', value: 'Amount' },
+    ])
+  );
+  if (report.expenses.length === 0) {
+    rows.push(excelRow([{ type: 'String', value: 'No expense records for this month.' }]));
+  } else {
+    for (const row of report.expenses) {
+      rows.push(
+        excelRow([
+          { type: 'String', value: row.date },
+          { type: 'String', value: row.category },
+          { type: 'String', value: row.description },
+          { type: 'String', value: row.paymentMethod },
+          { type: 'String', value: row.transactionType },
+          { type: 'Number', value: row.amount },
+        ])
+      );
+    }
   }
 
   rows.push(excelRow([]));
