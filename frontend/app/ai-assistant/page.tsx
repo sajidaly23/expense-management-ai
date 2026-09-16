@@ -99,11 +99,11 @@ export default function AIAssistantPage() {
   }, [messages, sending]);
 
   const quickQuestions = [
-    'Where did I spend the most this month?',
-    'How much did I save this month?',
+    'How much did I spend in August?',
+    'How much salary did I receive last month?',
     'How much did I spend on Food?',
-    'What will my expenses be next month?',
-    'Am I close to exceeding my budget?',
+    'Compare August and September expenses',
+    'What are my top expense categories?',
     'What is my health score?',
   ];
 
@@ -189,15 +189,14 @@ export default function AIAssistantPage() {
                 Assistant
               </h1>
               <p className="text-xs text-slate-400">
-                Replies from live MongoDB totals · chat saved to your account
-                {ollamaAvailable ? ' · Ollama ready' : ' · Ollama offline, using rules'}.
+                Answers from your live financial records · chat saved to your account
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs bg-slate-950 p-2 rounded-2xl border border-slate-800">
             <Cpu className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-300 font-medium">Engine:</span>
+            <span className="text-slate-300 font-medium">Enhanced replies:</span>
             <button
               type="button"
               onClick={() => setUseOllama(!useOllama)}
@@ -205,7 +204,7 @@ export default function AIAssistantPage() {
                 useOllama ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
               }`}
             >
-              {useOllama ? 'Local Ollama LLM' : 'Analytics Rules Engine'}
+              {useOllama ? 'On' : 'Off'}
             </button>
             <button
               type="button"
@@ -256,7 +255,7 @@ export default function AIAssistantPage() {
                   <p className="leading-relaxed whitespace-pre-wrap">{message.text}</p>
                   <div className={`flex items-center justify-between text-xs pt-1 ${message.sender === 'user' ? 'text-slate-900/80' : 'text-slate-500'}`}>
                     <span>{message.timestamp}</span>
-                    {message.source && <span className="font-mono">{message.source}</span>}
+                    {message.source === 'Error' && <span className="font-mono text-rose-400">{message.source}</span>}
                   </div>
                 </div>
 
@@ -270,7 +269,7 @@ export default function AIAssistantPage() {
           )}
           {sending && (
             <p className="text-xs text-slate-500">
-              {useOllama ? 'Thinking with your live totals…' : 'Looking up your live totals…'}
+              Looking up your financial records…
             </p>
           )}
         </div>
@@ -286,7 +285,7 @@ export default function AIAssistantPage() {
             type="text"
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask a question about your income, expenses, budgets, or forecast…"
+            placeholder="Ask about income, expenses, a month, category, salary, or savings…"
             disabled={loadingHistory}
             className="flex-1 p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 disabled:opacity-50"
           />
