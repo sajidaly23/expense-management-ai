@@ -6,6 +6,7 @@ import { EmergencyFundPlan, FinancialHealthScore } from '../../types';
 import { ShieldCheck, CheckCircle2, ArrowRight, Compass, Umbrella } from 'lucide-react';
 import Link from 'next/link';
 import { scoreService } from '../../services/score.service';
+import { healthHistoryService, HealthHistoryEntry } from '../../services/health-history.service';
 import { ApiError } from '../../lib/api';
 
 function statusClass(status: FinancialHealthScore['status']) {
@@ -17,6 +18,7 @@ function statusClass(status: FinancialHealthScore['status']) {
 export default function FinancialHealthPage() {
   const [score, setScore] = useState<FinancialHealthScore | null>(null);
   const [emergencyPlan, setEmergencyPlan] = useState<EmergencyFundPlan | null>(null);
+  const [history, setHistory] = useState<HealthHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -24,12 +26,19 @@ export default function FinancialHealthPage() {
     setError('');
     setLoading(true);
     try {
-      const [scoreRes, planRes] = await Promise.all([
+      const [scoreResult, planResult, historyResult] = await Promise.allSettled([
         scoreService.get(),
         scoreService.getEmergencyFund(),
+        healthHistoryService.list(12),
       ]);
-      setScore(scoreRes.score);
-      setEmergencyPlan(planRes.plan);
+      if (scoreResult.status === 'rejected') throw scoreResult.reason;
+      setScore(scoreResult.value.score);
+      if (planResult.status === 'fulfilled') {
+        setEmergencyPlan(planResult.value.plan);
+      }
+      if (historyResult.status === 'fulfilled') {
+        setHistory(historyResult.value.history);
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load health score.');
     } finally {
@@ -170,6 +179,39 @@ export default function FinancialHealthPage() {
                     Create an Emergency Fund goal →
                   </Link>
                 )}
+              </div>
+            )}
+
+            {history.length > 0 && (
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+                <h3 className="font-semibold text-lg text-slate-100">Score history</h3>
+                <div className="flex items-end gap-2 h-32">
+                  {[...history].reverse().map((entry) => {
+                    const height = Math.max(8, entry.overallScore);
+                    return (
+                      <div key={entry.id} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                        <span className="text-xs text-slate-400 font-medium">{entry.overallScore}</span>
+                        <div
+                          className="w-full rounded-t bg-emerald-500/80 min-h-[8px]"
+                          style={{ height: `${height}%` }}
+                          title={`${entry.monthKey}: ${entry.overallScore} (${entry.status})`}
+                        />
+                        <span className="text-[10px] text-slate-500 truncate w-full text-center">{entry.monthKey.slice(5)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="divide-y divide-slate-800/60 text-sm">
+                  {history.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between py-2.5">
+                      <div>
+                        <p className="font-medium text-slate-100">{entry.monthKey}</p>
+                        <p className="text-xs text-slate-500">{entry.status}</p>
+                      </div>
+                      <span className="text-lg font-semibold text-emerald-400">{entry.overallScore}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

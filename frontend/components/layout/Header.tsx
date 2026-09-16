@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu, Bell, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { getInitials, useAuth } from '../../context/AuthContext';
 import { notificationService } from '../../services/notification.service';
+import { searchService, SearchResult } from '../../services/search.service';
 import { NotificationItem } from '../../types';
 
 function formatWhen(iso: string) {
@@ -26,8 +28,14 @@ interface HeaderProps {
 }
 
 export default function Header({ setSidebarOpen }: HeaderProps) {
+  const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const unreadCount = notifications.filter((item) => !item.read).length;
 
@@ -47,6 +55,40 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
     return () => window.removeEventListener('smartfin:notifications-changed', refresh);
   }, []);
 
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await searchService.search(q);
+        setSearchResults(res.results);
+        setSearchOpen(true);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 md:px-8 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -57,13 +99,49 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="relative hidden md:block w-80">
+        <div ref={searchRef} className="relative hidden md:block w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => {
+              if (searchQuery.trim().length >= 2 && searchResults.length > 0) setSearchOpen(true);
+            }}
             placeholder="Search transactions, budgets, reports"
             className="w-full pl-9 pr-4 py-2 text-sm bg-slate-950 border border-slate-800 rounded-md text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400 transition-colors"
           />
+          {searchOpen && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-lift z-50 overflow-hidden">
+              {searchLoading ? (
+                <p className="px-4 py-3 text-xs text-slate-400">Searching…</p>
+              ) : searchResults.length === 0 ? (
+                <p className="px-4 py-3 text-xs text-slate-400">No results for &ldquo;{searchQuery.trim()}&rdquo;</p>
+              ) : (
+                <ul className="max-h-72 overflow-y-auto custom-scrollbar py-1">
+                  {searchResults.map((item) => (
+                    <li key={`${item.type}-${item.id}`}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSearchOpen(false);
+                          router.push(item.href);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-slate-800/60 transition-colors"
+                      >
+                        <p className="text-sm font-medium text-slate-100 truncate">{item.title}</p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {item.subtitle}
+                          {item.amount != null ? ` · Rs. ${item.amount.toLocaleString()}` : ''}
+                        </p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

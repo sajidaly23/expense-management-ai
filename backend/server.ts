@@ -2,6 +2,8 @@ import app from './src/app.js';
 import { config } from './src/config/env.js';
 import { connectDatabase } from './src/config/db.js';
 import { startRecurringScheduler } from './src/jobs/recurringScheduler.js';
+import { startHealthHistoryScheduler } from './src/jobs/healthHistoryScheduler.js';
+import { startMlPipelineScheduler } from './src/jobs/mlPipelineScheduler.js';
 import mongoose from 'mongoose';
 
 async function startServer() {
@@ -16,8 +18,12 @@ async function startServer() {
     }
 
     let stopRecurringScheduler: (() => void) | undefined;
+    let stopHealthScheduler: (() => void) | undefined;
+    let stopMlPipelineScheduler: (() => void) | undefined;
     if (config.nodeEnv !== 'test') {
       stopRecurringScheduler = startRecurringScheduler();
+      stopHealthScheduler = startHealthHistoryScheduler();
+      stopMlPipelineScheduler = startMlPipelineScheduler();
     }
 
     const server = app.listen(config.port, () => {
@@ -52,6 +58,8 @@ async function startServer() {
     const shutdown = async () => {
       console.log('Shutting down SmartFin AI Backend server...');
       stopRecurringScheduler?.();
+      stopHealthScheduler?.();
+      stopMlPipelineScheduler?.();
       server.close(async () => {
         if (mongoose.connection.readyState === 1) {
           await mongoose.disconnect();

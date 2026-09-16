@@ -12,8 +12,27 @@ export type AdminOverviewResponse = {
   auditLogs: AuditLog[];
 };
 
+export type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
 export const adminService = {
   overview() {
     return apiRequest<AdminOverviewResponse>('/api/admin/overview');
+  },
+
+  listUsers() {
+    return apiRequest<{ status: string; users: AdminUser[]; count: number }>('/api/admin/users');
+  },
+
+  updateUserRole(id: string, role: 'USER' | 'ADMIN') {
+    return apiRequest<{ status: string; user: AdminUser }>(`/api/admin/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
   },
 };

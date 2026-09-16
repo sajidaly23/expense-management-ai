@@ -29,11 +29,14 @@ export default function IncomePage() {
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
 
-  const loadIncomes = async () => {
+  const loadIncomes = async (filters?: { search?: string; incomeType?: string }) => {
     setError('');
     setLoading(true);
     try {
-      const res = await incomeService.list();
+      const res = await incomeService.list({
+        search: filters?.search || undefined,
+        incomeType: (filters?.incomeType as IncomeType | 'ALL') || 'ALL',
+      });
       setIncomes(res.incomes);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load income entries.');
@@ -43,8 +46,11 @@ export default function IncomePage() {
   };
 
   useEffect(() => {
-    loadIncomes();
-  }, []);
+    const timer = setTimeout(() => {
+      void loadIncomes({ search, incomeType: selectedType });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedType]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -114,14 +120,7 @@ export default function IncomePage() {
     }
   };
 
-  const filtered = incomes.filter((item) => {
-    const haystack = `${item.source} ${item.description || ''}`.toLowerCase();
-    const matchSearch = haystack.includes(search.toLowerCase());
-    const matchType = selectedType === 'ALL' || item.incomeType === selectedType;
-    return matchSearch && matchType;
-  });
-
-  const total = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+  const total = incomes.reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
     <AppLayout>
@@ -148,7 +147,7 @@ export default function IncomePage() {
             <span>{error}</span>
             <button
               type="button"
-              onClick={loadIncomes}
+              onClick={() => void loadIncomes({ search, incomeType: selectedType })}
               className="shrink-0 font-medium text-rose-500 underline-offset-2 hover:underline"
             >
               Retry
@@ -201,7 +200,7 @@ export default function IncomePage() {
               <p className="text-sm font-medium text-slate-100">No income entries yet</p>
               <p className="text-sm text-slate-400">Add your first salary or other earning to start the ledger.</p>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : incomes.length === 0 ? (
             <div className="py-10 text-center space-y-2">
               <p className="text-sm font-medium text-slate-100">No matching entries</p>
               <p className="text-sm text-slate-400">Try a different search or income type.</p>
@@ -219,7 +218,7 @@ export default function IncomePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-sm">
-                {filtered.map((item) => (
+                {incomes.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5">
                       <p className="font-medium text-slate-100">{item.source}</p>

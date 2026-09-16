@@ -28,4 +28,15 @@ export const profileService = {
       body: JSON.stringify(payload),
     });
   },
+
+  exportData() {
+    return apiRequest<{ status: string; data: Record<string, unknown> }>('/api/profile/export');
+  },
+
+  deleteAccount(password: string) {
+    return apiRequest<{ status: string; message: string }>('/api/profile/account', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+  },
 };

@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { Expense, ExpenseCategory, PaymentMethod, TransactionType } from '../../types';
-import { Receipt, Plus, Search, Filter, Trash2, Pencil, Repeat } from 'lucide-react';
+import { Receipt, Plus, Search, Filter, Trash2, Pencil, Repeat, Sparkles, AlertTriangle } from 'lucide-react';
 import { expenseService } from '../../services/expense.service';
+import { categorizeService, DuplicateExpense } from '../../services/categorize.service';
 import { ApiError } from '../../lib/api';
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -56,12 +57,19 @@ export default function ExpensesPage() {
   const [formError, setFormError] = useState('');
   const [deletingItem, setDeletingItem] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateExpense[]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
 
-  const loadExpenses = async () => {
+  const loadExpenses = async (filters?: { search?: string; category?: string; transactionType?: string }) => {
     setError('');
     setLoading(true);
     try {
-      const res = await expenseService.list();
+      const res = await expenseService.list({
+        search: filters?.search || undefined,
+        category: (filters?.category as ExpenseCategory | 'ALL') || 'ALL',
+        transactionType: (filters?.transactionType as TransactionType | 'ALL') || 'ALL',
+      });
       setExpenses(res.expenses);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load expense entries.');
@@ -71,13 +79,17 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
-    loadExpenses();
-  }, []);
+    const timer = setTimeout(() => {
+      void loadExpenses({ search, category: selectedCategory, transactionType: selectedType });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedCategory, selectedType]);
 
   const openCreate = () => {
     setEditingId(null);
     setFormData({ ...emptyForm, date: new Date().toLocaleDateString('en-CA') });
     setFormError('');
+    setDuplicates([]);
     setShowModal(true);
   };
 
@@ -94,7 +106,42 @@ export default function ExpensesPage() {
       recurring: item.recurring,
     });
     setFormError('');
+    setDuplicates([]);
     setShowModal(true);
+  };
+
+  const handleSuggestCategory = async () => {
+    if (!formData.description.trim()) return;
+    setSuggesting(true);
+    setFormError('');
+    try {
+      const res = await categorizeService.suggest(formData.description);
+      setFormData((prev) => ({ ...prev, category: res.suggestion.category }));
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Unable to suggest category.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const checkDuplicates = async () => {
+    const amount = parseFloat(formData.amount);
+    if (!formData.description.trim() || !formData.amount || Number.isNaN(amount)) {
+      setDuplicates([]);
+      return [];
+    }
+    setCheckingDuplicates(true);
+    try {
+      const res = await categorizeService.duplicates(amount, formData.description, formData.date);
+      const filtered = editingId ? res.duplicates.filter((d) => d.id !== editingId) : res.duplicates;
+      setDuplicates(filtered);
+      return filtered;
+    } catch {
+      setDuplicates([]);
+      return [];
+    } finally {
+      setCheckingDuplicates(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -104,6 +151,13 @@ export default function ExpensesPage() {
       return;
     }
     setFormError('');
+    const found = await checkDuplicates();
+    if (found.length > 0) {
+      const proceed = window.confirm(
+        `Possible duplicate: ${found.length} similar expense(s) found near this date. Save anyway?`
+      );
+      if (!proceed) return;
+    }
     setSaving(true);
     const payload = {
       amount: parseFloat(formData.amount),
@@ -126,6 +180,7 @@ export default function ExpensesPage() {
       setShowModal(false);
       setEditingId(null);
       setFormData(emptyForm);
+      setDuplicates([]);
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : 'Unable to save expense entry.');
     } finally {
@@ -148,15 +203,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const filtered = expenses.filter((item) => {
-    const haystack = `${item.description} ${item.subcategory || ''} ${item.category}`.toLowerCase();
-    const matchSearch = haystack.includes(search.toLowerCase());
-    const matchCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
-    const matchType = selectedType === 'ALL' || item.transactionType === selectedType;
-    return matchSearch && matchCategory && matchType;
-  });
-
-  const totalSpent = filtered.reduce((acc, curr) => acc + curr.amount, 0);
+  const totalSpent = expenses.reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
     <AppLayout>
@@ -183,7 +230,7 @@ export default function ExpensesPage() {
             <span>{error}</span>
             <button
               type="button"
-              onClick={loadExpenses}
+              onClick={() => void loadExpenses({ search, category: selectedCategory, transactionType: selectedType })}
               className="shrink-0 font-medium text-rose-500 underline-offset-2 hover:underline"
             >
               Retry
@@ -245,7 +292,7 @@ export default function ExpensesPage() {
               <p className="text-sm font-medium text-slate-100">No expense entries yet</p>
               <p className="text-sm text-slate-400">Add your first purchase to start the spending ledger.</p>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : expenses.length === 0 ? (
             <div className="py-10 text-center space-y-2">
               <p className="text-sm font-medium text-slate-100">No matching entries</p>
               <p className="text-sm text-slate-400">Try a different search, category, or Need/Want filter.</p>
@@ -264,7 +311,7 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-sm">
-                {filtered.map((item) => (
+                {expenses.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="py-3.5">
                       <p className="font-medium text-slate-100">{item.description}</p>
@@ -334,18 +381,49 @@ export default function ExpensesPage() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-slate-400 mb-1.5 font-medium">Description</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-slate-400 font-medium">Description</label>
+                      {formData.description.trim().length >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => void handleSuggestCategory()}
+                          disabled={suggesting}
+                          className="text-xs text-emerald-500 hover:underline flex items-center gap-1 disabled:opacity-60"
+                        >
+                          <Sparkles className="w-3 h-3" /> {suggesting ? 'Suggesting…' : 'Suggest category'}
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       required
                       minLength={2}
                       maxLength={240}
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, description: e.target.value });
+                        setDuplicates([]);
+                      }}
+                      onBlur={() => void checkDuplicates()}
                       placeholder="e.g. Supermarket groceries"
                       className="w-full p-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-ink-400"
                     />
                   </div>
+                  {duplicates.length > 0 && (
+                    <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-400 space-y-1">
+                      <p className="font-medium flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5" /> Possible duplicate{duplicates.length > 1 ? 's' : ''} found
+                      </p>
+                      {duplicates.map((dup) => (
+                        <p key={dup.id} className="text-amber-400/90">
+                          {dup.description} · Rs. {dup.amount.toLocaleString()} · {dup.date}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {checkingDuplicates && (
+                    <p className="text-xs text-slate-500">Checking for duplicates…</p>
+                  )}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-slate-400 mb-1.5 font-medium">Amount (Rs.)</label>

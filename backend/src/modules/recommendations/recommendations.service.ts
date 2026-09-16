@@ -6,6 +6,7 @@ import { listGoals } from '../goal/goal.service.js';
 import { getHealthScore } from '../score/score.service.js';
 import { getLatestPrediction } from '../prediction/prediction.service.js';
 import { Anomaly } from '../anomaly/anomaly.model.js';
+import { getProfile } from '../profile/profile.service.js';
 
 export type Recommendation = {
   id: string;
@@ -29,13 +30,14 @@ function formatRs(amount: number) {
 export async function getRecommendations(userId: string) {
   assertDatabase();
 
-  const [summary, budgetResult, goalResult, health, prediction, unresolvedCount] = await Promise.all([
+  const [summary, budgetResult, goalResult, health, prediction, unresolvedCount, profile] = await Promise.all([
     getSummary(userId, 6),
     listBudgets(userId, {}),
     listGoals(userId),
     getHealthScore(userId),
     getLatestPrediction(userId).catch(() => null),
     Anomaly.countDocuments({ userId, status: 'UNRESOLVED' }),
+    getProfile(userId),
   ]);
 
   const items: Recommendation[] = [];
@@ -199,6 +201,33 @@ export async function getRecommendations(userId: string) {
       category: 'savings',
       type: 'tip',
       priority: 55,
+    });
+  }
+
+  if (profile.financialGoal) {
+    items.push({
+      id: 'profile-goal',
+      title: `Profile goal: ${profile.financialGoal}`,
+      description:
+        profile.riskPreference === 'Low'
+          ? 'Your low risk preference suits conservative saving and stable budgets.'
+          : profile.riskPreference === 'High'
+            ? 'High risk tolerance — ensure emergency fund covers 6 months before aggressive investing.'
+            : `Align monthly savings with your "${profile.financialGoal}" target.`,
+      category: 'planning',
+      type: 'tip',
+      priority: 58,
+    });
+  }
+
+  if (profile.monthlyIncome && month.income > 0 && month.income < profile.monthlyIncome * 0.8) {
+    items.push({
+      id: 'income-below-profile',
+      title: 'Income below profile baseline',
+      description: `This month Rs. ${month.income.toLocaleString()} vs profile baseline Rs. ${profile.monthlyIncome.toLocaleString()}.`,
+      category: 'planning',
+      type: 'warning',
+      priority: 72,
     });
   }
 

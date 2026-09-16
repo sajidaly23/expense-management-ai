@@ -19,6 +19,11 @@ import {
   LogOut,
   Upload,
   Repeat,
+  Bell,
+  Lightbulb,
+  CreditCard,
+  Scale,
+  FlaskConical,
 } from 'lucide-react';
 import { getInitials, useAuth } from '../../context/AuthContext';
 
@@ -38,6 +43,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Predictions', href: '/predictions', icon: BrainCircuit },
     { name: 'Anomalies', href: '/anomalies', icon: AlertTriangle },
     { name: 'Financial Health', href: '/financial-health', icon: HeartPulse },
+    { name: 'Recommendations', href: '/recommendations', icon: Lightbulb },
+    { name: 'What-If Simulator', href: '/simulator', icon: FlaskConical },
   ];
 
   const managementNav = [
@@ -47,11 +54,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Bills & Recurring', href: '/recurring', icon: Repeat },
     { name: 'Budgets', href: '/budgets', icon: PiggyBank },
     { name: 'Savings Goals', href: '/savings-goals', icon: Target },
+    { name: 'Debt & Loans', href: '/debts', icon: CreditCard },
+    { name: 'Net Worth', href: '/networth', icon: Scale },
   ];
 
   const aiNav = [
     { name: 'Assistant', href: '/ai-assistant', icon: Bot },
     { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Notifications', href: '/notifications', icon: Bell },
     { name: 'Profile', href: '/profile', icon: UserCheck },
     ...(user?.role === 'ADMIN'
       ? [{ name: 'Administration', href: '/admin', icon: ShieldCheck }]

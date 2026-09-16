@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { UserProfile } from '../../types';
-import { Save } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Save, Download, Trash2 } from 'lucide-react';
 import { profileService } from '../../services/profile.service';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -30,11 +31,16 @@ const emptyForm = {
 };
 
 export default function ProfilePage() {
-  const { refreshUser } = useAuth();
+  const router = useRouter();
+  const { refreshUser, logout } = useAuth();
   const [formData, setFormData] = useState(emptyForm);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -92,6 +98,47 @@ export default function ProfilePage() {
       setFormError(err instanceof ApiError ? err.message : 'Unable to save profile.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    setError('');
+    try {
+      const res = await profileService.exportData();
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smartfin-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to export data.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deletePassword) {
+      setDeleteError('Enter your password to confirm deletion.');
+      return;
+    }
+    if (!window.confirm('Permanently delete your account and all financial data? This cannot be undone.')) return;
+    setDeleteError('');
+    setDeleting(true);
+    try {
+      await profileService.deleteAccount(deletePassword);
+      logout();
+      router.replace('/login');
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : 'Unable to delete account.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -252,6 +299,56 @@ export default function ProfilePage() {
               </button>
             </div>
           </form>
+        )}
+
+        {!loading && (
+          <>
+            <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="typo-overline text-slate-400">Data</p>
+                <h2 className="text-lg font-display font-semibold text-slate-100 mt-1">Export your data</h2>
+                <p className="text-xs text-slate-400 mt-1">Download income, expenses, budgets, goals, and profile as JSON.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleExport()}
+                disabled={exporting}
+                className="px-5 py-2.5 rounded-md border border-slate-800 text-slate-100 font-medium text-sm flex items-center gap-2 hover:bg-slate-800 disabled:opacity-60 shrink-0"
+              >
+                <Download className="w-4 h-4" /> {exporting ? 'Exporting…' : 'Export data'}
+              </button>
+            </div>
+
+            <div className="p-6 rounded-xl bg-slate-900 border border-rose-500/20 space-y-4">
+              <div>
+                <p className="typo-overline text-rose-400">Danger zone</p>
+                <h2 className="text-lg font-display font-semibold text-slate-100 mt-1">Delete account</h2>
+                <p className="text-xs text-slate-400 mt-1">Removes your account and all stored financial records permanently.</p>
+              </div>
+              <form onSubmit={handleDeleteAccount} className="space-y-3 text-sm max-w-md">
+                {deleteError && (
+                  <div className="rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-500">{deleteError}</div>
+                )}
+                <div>
+                  <label className="block text-slate-400 mb-1.5 font-medium">Confirm with password</label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your account password"
+                    className="w-full p-2.5 rounded-md bg-slate-950 border border-slate-800 text-slate-100"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={deleting}
+                  className="px-5 py-2.5 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-medium flex items-center gap-2 disabled:opacity-60"
+                >
+                  <Trash2 className="w-4 h-4" /> {deleting ? 'Deleting…' : 'Delete account'}
+                </button>
+              </form>
+            </div>
+          </>
         )}
       </div>
     </AppLayout>

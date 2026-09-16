@@ -19,6 +19,13 @@ import reportRoutes from './modules/report/report.routes.js';
 import notificationRoutes from './modules/notification/notification.routes.js';
 import recurringRoutes from './modules/recurring/recurring.routes.js';
 import recommendationsRoutes from './modules/recommendations/recommendations.routes.js';
+import searchRoutes from './modules/search/search.routes.js';
+import debtRoutes from './modules/debt/debt.routes.js';
+import networthRoutes from './modules/networth/networth.routes.js';
+import simulatorRoutes from './modules/simulator/simulator.routes.js';
+import healthHistoryRoutes from './modules/health-history/health-history.routes.js';
+import categorizeRoutes from './modules/categorize/categorize.routes.js';
+import mlPipelineRoutes from './modules/ml-pipeline/ml-pipeline.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
 import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -85,6 +92,13 @@ app.get('/', (_req, res) => {
     notifications: '/api/notifications',
     recurring: '/api/recurring',
     recommendations: '/api/recommendations',
+    search: '/api/search',
+    debts: '/api/debts',
+    networth: '/api/networth',
+    simulator: '/api/simulator',
+    healthHistory: '/api/health-history',
+    categorize: '/api/categorize',
+    mlPipeline: '/api/ml-pipeline',
     admin: '/api/admin',
     status: 'ACTIVE',
   });
@@ -107,6 +121,13 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/recurring', recurringRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/debts', debtRoutes);
+app.use('/api/networth', networthRoutes);
+app.use('/api/simulator', simulatorRoutes);
+app.use('/api/health-history', healthHistoryRoutes);
+app.use('/api/categorize', categorizeRoutes);
+app.use('/api/ml-pipeline', mlPipelineRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(notFoundHandler);

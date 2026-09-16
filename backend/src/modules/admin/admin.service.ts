@@ -35,6 +35,44 @@ function toPublicAuditLog(item: IAuditLog): PublicAuditLog {
   };
 }
 
+export type PublicAdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+};
+
+export async function listUsers() {
+  assertDatabase();
+  const users = await User.find({}).select('name email role createdAt').sort({ createdAt: -1 }).limit(200);
+  return {
+    users: users.map((u) => ({
+      id: String(u._id),
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      createdAt: ((u as { createdAt?: Date }).createdAt || new Date()).toISOString(),
+    })),
+    count: users.length,
+  };
+}
+
+export async function updateUserRole(adminId: string, targetUserId: string, role: 'USER' | 'ADMIN') {
+  assertDatabase();
+  if (adminId === targetUserId && role !== 'ADMIN') {
+    throw new AppError('You cannot demote your own admin account.', 400);
+  }
+  const user = await User.findByIdAndUpdate(targetUserId, { role }, { new: true }).select('name email role');
+  if (!user) throw new AppError('User not found.', 404);
+  return {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+}
+
 export async function getAdminOverview() {
   assertDatabase();
 
