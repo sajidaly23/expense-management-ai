@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AuthGuard from '../auth/AuthGuard';
+import CommandCenter from '../CommandCenter';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             {children}
           </main>
         </div>
+        <CommandCenter />
       </div>
     </AuthGuard>
   );

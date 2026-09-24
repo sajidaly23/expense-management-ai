@@ -217,12 +217,20 @@ export default function ExpensesPage() {
             </p>
           </div>
 
-          <button
-            onClick={openCreate}
-            className="px-5 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Add expense
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/expenses/scan"
+              className="px-4 py-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm flex items-center gap-2 transition-colors shadow-xs"
+            >
+              <Sparkles className="w-4 h-4" /> Scan Receipt
+            </a>
+            <button
+              onClick={openCreate}
+              className="px-5 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add expense
+            </button>
+          </div>
         </div>
 
         {error && (

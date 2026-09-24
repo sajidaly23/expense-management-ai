@@ -1,28 +1,61 @@
-import { EXPENSE_CATEGORIES, ExpenseCategory } from '../expense/expense.model.js';
-import { Expense } from '../expense/expense.model.js';
+import { EXPENSE_CATEGORIES, ExpenseCategory, Expense } from '../expense/expense.model.js';
 import { isDatabaseConnected } from '../../config/db.js';
+import { MerchantRule } from './merchant-rule.model.js';
+
+const KNOWN_MERCHANTS: Record<string, { category: ExpenseCategory; subcategory?: string; transactionType?: 'NEED' | 'WANT'; recurring?: boolean }> = {
+  daraz: { category: 'Shopping', subcategory: 'Online Shopping', transactionType: 'WANT', recurring: false },
+  foodpanda: { category: 'Food', subcategory: 'Food Delivery', transactionType: 'WANT', recurring: false },
+  netflix: { category: 'Entertainment', subcategory: 'Streaming', transactionType: 'WANT', recurring: true },
+  spotify: { category: 'Entertainment', subcategory: 'Music Subscription', transactionType: 'WANT', recurring: true },
+  'k-electric': { category: 'Utilities', subcategory: 'Electricity', transactionType: 'NEED', recurring: true },
+  kelectric: { category: 'Utilities', subcategory: 'Electricity', transactionType: 'NEED', recurring: true },
+  careem: { category: 'Transport', subcategory: 'Ride Hailing', transactionType: 'NEED', recurring: false },
+  uber: { category: 'Transport', subcategory: 'Ride Hailing', transactionType: 'NEED', recurring: false },
+  salary: { category: 'Income' as any, subcategory: 'Monthly Salary', transactionType: 'NEED', recurring: true },
+  steam: { category: 'Entertainment', subcategory: 'Gaming', transactionType: 'WANT', recurring: false },
+  coursera: { category: 'Education', subcategory: 'Online Courses', transactionType: 'NEED', recurring: false },
+  udemy: { category: 'Education', subcategory: 'Online Courses', transactionType: 'NEED', recurring: false },
+  shell: { category: 'Transport', subcategory: 'Fuel', transactionType: 'NEED', recurring: false },
+  pso: { category: 'Transport', subcategory: 'Fuel', transactionType: 'NEED', recurring: false },
+};
 
 const KEYWORD_MAP: Record<ExpenseCategory, string[]> = {
-  Food: ['food', 'restaurant', 'grocery', 'lunch', 'dinner', 'cafe', 'meal', 'uber eats', 'foodpanda'],
-  Transport: ['uber', 'careem', 'fuel', 'petrol', 'bus', 'train', 'taxi', 'transport', 'metro'],
-  Rent: ['rent', 'landlord', 'lease', 'housing'],
+  Food: ['food', 'restaurant', 'grocery', 'lunch', 'dinner', 'cafe', 'meal', 'uber eats', 'foodpanda', 'dining'],
+  Transport: ['uber', 'careem', 'fuel', 'petrol', 'bus', 'train', 'taxi', 'transport', 'metro', 'gasoline'],
+  Rent: ['rent', 'landlord', 'lease', 'housing', 'apartment'],
   Bills: ['bill', 'electric', 'electricity', 'water', 'internet', 'phone', 'mobile', 'subscription', 'netflix', 'spotify'],
   Education: ['school', 'tuition', 'course', 'book', 'university', 'education', 'exam'],
   Healthcare: ['doctor', 'hospital', 'pharmacy', 'medicine', 'health', 'clinic', 'dental'],
-  Shopping: ['shop', 'mall', 'amazon', 'clothes', 'clothing', 'shoes', 'retail'],
+  Shopping: ['shop', 'mall', 'amazon', 'daraz', 'clothes', 'clothing', 'shoes', 'retail'],
   Entertainment: ['movie', 'cinema', 'game', 'concert', 'entertainment', 'hobby'],
   Travel: ['flight', 'hotel', 'travel', 'airbnb', 'vacation', 'trip'],
-  Utilities: ['gas', 'utility', 'maintenance', 'repair'],
+  Utilities: ['gas', 'utility', 'maintenance', 'repair', 'electricity', 'k-electric'],
   Other: [],
 };
 
 export function suggestCategoryFromText(description: string): {
   category: ExpenseCategory;
+  subcategory?: string;
+  transactionType?: 'NEED' | 'WANT';
+  recurring?: boolean;
   confidence: number;
-  source: 'keyword' | 'history' | 'default';
+  source: 'merchant_rule' | 'keyword' | 'history' | 'default';
 } {
   const text = description.toLowerCase().trim();
   if (!text) return { category: 'Other', confidence: 0.3, source: 'default' };
+
+  for (const [key, rule] of Object.entries(KNOWN_MERCHANTS)) {
+    if (text.includes(key)) {
+      return {
+        category: rule.category,
+        subcategory: rule.subcategory,
+        transactionType: rule.transactionType,
+        recurring: rule.recurring,
+        confidence: 0.98,
+        source: 'merchant_rule',
+      };
+    }
+  }
 
   let best: ExpenseCategory = 'Other';
   let bestScore = 0;
@@ -48,15 +81,32 @@ export function suggestCategoryFromText(description: string): {
 }
 
 export async function suggestCategory(userId: string, description: string) {
-  const keyword = suggestCategoryFromText(description);
+  const text = description.toLowerCase().trim();
+  const keywordResult = suggestCategoryFromText(description);
 
-  if (!isDatabaseConnected() || !description.trim()) {
-    return keyword;
+  if (!isDatabaseConnected() || !text) {
+    return keywordResult;
+  }
+
+  const userRule = await MerchantRule.findOne({
+    userId,
+    merchant: { $regex: text.slice(0, 20), $options: 'i' },
+  }).lean();
+
+  if (userRule) {
+    return {
+      category: userRule.category as ExpenseCategory,
+      subcategory: userRule.subcategory,
+      transactionType: userRule.transactionType,
+      recurring: userRule.recurring,
+      confidence: 0.99,
+      source: 'merchant_rule' as const,
+    };
   }
 
   const history = await Expense.find({
     userId,
-    description: { $regex: description.trim().slice(0, 20), $options: 'i' },
+    description: { $regex: text.slice(0, 20), $options: 'i' },
   })
     .sort({ date: -1 })
     .limit(5)
@@ -71,13 +121,36 @@ export async function suggestCategory(userId: string, description: string) {
     if (top && top[1] >= 2) {
       return {
         category: top[0] as ExpenseCategory,
-        confidence: Math.min(0.9, 0.6 + top[1] * 0.05),
+        confidence: Math.min(0.95, 0.65 + top[1] * 0.08),
         source: 'history' as const,
       };
     }
   }
 
-  return keyword;
+  return keywordResult;
+}
+
+export async function learnMerchantMapping(
+  userId: string,
+  merchant: string,
+  category: string,
+  subcategory?: string,
+  transactionType?: 'NEED' | 'WANT',
+  recurring?: boolean
+) {
+  if (!isDatabaseConnected() || !merchant.trim()) return null;
+  const cleanMerchant = merchant.toLowerCase().trim();
+
+  return MerchantRule.findOneAndUpdate(
+    { userId, merchant: cleanMerchant },
+    {
+      category: category.trim(),
+      subcategory: subcategory?.trim(),
+      transactionType,
+      recurring: Boolean(recurring),
+    },
+    { upsert: true, new: true }
+  );
 }
 
 export async function findDuplicateExpenses(

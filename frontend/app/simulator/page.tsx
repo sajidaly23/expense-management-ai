@@ -70,6 +70,56 @@ export default function SimulatorPage() {
               <FlaskConical className="w-4 h-4 text-purple-400" /> Adjust assumptions
             </h3>
 
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-slate-400">Quick Scenario Presets</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIncomeChangePercent(20);
+                    setCategoryCutPercent(0);
+                    setExtraSavingsMonthly(0);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-medium transition-colors"
+                >
+                  ⚡ Salary +20%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIncomeChangePercent(-10);
+                    setCategoryCutPercent(0);
+                    setExtraSavingsMonthly(0);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium transition-colors"
+                >
+                  ⚡ Income -10%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategory('Food');
+                    setCategoryCutPercent(20);
+                    setIncomeChangePercent(0);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/20 text-xs font-medium transition-colors"
+                >
+                  ⚡ Cut Food 20%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExtraSavingsMonthly(15000);
+                    setIncomeChangePercent(0);
+                    setCategoryCutPercent(0);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 text-xs font-medium transition-colors"
+                >
+                  ⚡ Save +Rs 15k
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <div className="flex justify-between text-slate-400">
                 <label>Income change</label>

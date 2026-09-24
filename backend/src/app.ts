@@ -27,6 +27,9 @@ import healthHistoryRoutes from './modules/health-history/health-history.routes.
 import categorizeRoutes from './modules/categorize/categorize.routes.js';
 import mlPipelineRoutes from './modules/ml-pipeline/ml-pipeline.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import subscriptionsRoutes from './modules/subscriptions/subscriptions.routes.js';
+import receiptRoutes from './modules/receipt/receipt.routes.js';
+import insightsRoutes from './modules/insights/insights.routes.js';
 import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { auditLogger } from './middleware/auditLogger.js';
@@ -129,6 +132,9 @@ app.use('/api/health-history', healthHistoryRoutes);
 app.use('/api/categorize', categorizeRoutes);
 app.use('/api/ml-pipeline', mlPipelineRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/subscriptions', subscriptionsRoutes);
+app.use('/api/receipts', receiptRoutes);
+app.use('/api/insights', insightsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

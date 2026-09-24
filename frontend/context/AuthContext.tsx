@@ -66,15 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(storedToken);
     if (storedUser) setUser(storedUser);
 
+    let finished = false;
+    const safetyTimer = setTimeout(() => {
+      if (!finished) {
+        setLoading(false);
+      }
+    }, 4000);
+
     authService
       .me()
       .then((res) => persist(storedToken, res.user))
       .catch((err: unknown) => {
-        if (err instanceof ApiError && err.status === 401) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
           logout();
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        finished = true;
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      });
   }, [logout]);
 
   const login = useCallback(async (email: string, password: string) => {

@@ -4,50 +4,41 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppLayout from '../../components/layout/AppLayout';
 import { recurringService, RecurringTemplate } from '../../services/recurring.service';
+import { fetchSubscriptions, SubscriptionsSummary } from '../../services/subscriptions.service';
 import { ApiError } from '../../lib/api';
-import { RefreshCw, Wallet, Receipt, Plus, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Wallet, Receipt, Plus, CheckCircle2, AlertTriangle, Repeat, ShieldAlert, Sparkles } from 'lucide-react';
 
 const currentMonth = () => new Date().toISOString().slice(0, 7);
-
-function TemplateRow({ item }: { item: RecurringTemplate }) {
-  return (
-    <div className="flex items-center justify-between gap-3 p-4 rounded-lg bg-slate-950/60 border border-slate-800">
-      <div className="min-w-0">
-        <p className="font-medium text-slate-100 truncate">{item.label}</p>
-        <p className="text-xs text-slate-400 mt-0.5">
-          {item.kind === 'income' ? item.incomeType : item.category}
-          {item.transactionType ? ` · ${item.transactionType}` : ''} · Last: {item.lastDate}
-        </p>
-      </div>
-      <span className="text-sm font-semibold text-slate-100 shrink-0">Rs. {item.amount.toLocaleString()}</span>
-    </div>
-  );
-}
 
 export default function RecurringPage() {
   const [income, setIncome] = useState<RecurringTemplate[]>([]);
   const [expense, setExpense] = useState<RecurringTemplate[]>([]);
+  const [subSummary, setSubSummary] = useState<SubscriptionsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [processResult, setProcessResult] = useState<string | null>(null);
 
-  const loadTemplates = async () => {
+  const loadData = async () => {
     setError('');
     setLoading(true);
     try {
-      const res = await recurringService.list();
-      setIncome(res.income);
-      setExpense(res.expense);
+      const [recRes, subRes] = await Promise.all([
+        recurringService.list().catch(() => ({ income: [], expense: [] })),
+        fetchSubscriptions().catch(() => ({ data: { subscriptions: [], totalMonthlyCommitments: 0, totalAnnualCommitments: 0, activeCount: 0, priceIncreaseAlerts: [] } })),
+      ]);
+      setIncome(recRes.income);
+      setExpense(recRes.expense);
+      setSubSummary(subRes.data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Unable to load recurring templates.');
+      setError(err instanceof ApiError ? err.message : 'Unable to load subscriptions and recurring items.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadTemplates();
+    void loadData();
   }, []);
 
   const handleProcess = async () => {
@@ -61,10 +52,9 @@ export default function RecurringPage() {
       if (total === 0) {
         setProcessResult(`No new entries needed for ${res.result.month}. ${skipped.income + skipped.expense} already posted.`);
       } else {
-        setProcessResult(
-          `Created ${created.income} income and ${created.expense} expense entries for ${res.result.month}.`
-        );
+        setProcessResult(`Created ${created.income} income and ${created.expense} expense entries for ${res.result.month}.`);
       }
+      await loadData();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to process recurring entries.');
     } finally {
@@ -75,97 +65,144 @@ export default function RecurringPage() {
   return (
     <AppLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-xl bg-slate-900 border border-slate-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <div>
-            <p className="typo-overline text-slate-400">Planning</p>
-            <h1 className="text-2xl md:text-3xl font-display font-semibold text-slate-100 mt-1">
-              Bills &amp; recurring
+            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Recurring Commitments</span>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
+              Bills &amp; Subscriptions
             </h1>
-            <p className="text-slate-400 text-xs md:text-sm mt-1">
-              Mark income or expenses as recurring when adding them. Process monthly to auto-post entries.
+            <p className="text-slate-500 text-xs md:text-sm mt-1">
+              Automated subscription intelligence · Price change alerts · Monthly auto-posting
             </p>
           </div>
           <button
             type="button"
             onClick={handleProcess}
             disabled={processing}
-            className="px-5 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center gap-2 disabled:opacity-60"
+            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center gap-2 shadow-xs transition-colors disabled:opacity-60"
           >
             <RefreshCw className={`w-4 h-4 ${processing ? 'animate-spin' : ''}`} />
-            {processing ? 'Processing…' : 'Process this month'}
+            {processing ? 'Processing…' : 'Process This Month'}
           </button>
         </div>
 
         {error && (
-          <div className="rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">{error}</div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
         )}
 
         {processResult && (
-          <div className="flex items-start gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span>{processResult}</span>
+          </div>
+        )}
+
+        {subSummary && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Commitments</span>
+              <h3 className="text-2xl font-bold text-slate-900">Rs. {subSummary.totalMonthlyCommitments.toLocaleString()} / mo</h3>
+              <p className="text-xs text-slate-500">{subSummary.activeCount} active subscriptions &amp; recurring bills</p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Annual Commitments</span>
+              <h3 className="text-2xl font-bold text-slate-900">Rs. {subSummary.totalAnnualCommitments.toLocaleString()} / yr</h3>
+              <p className="text-xs text-slate-500">Projected 12-month recurring expenditure</p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Price Alerts</span>
+              <h3 className="text-2xl font-bold text-slate-900">{subSummary.priceIncreaseAlerts.length} Alerts</h3>
+              <p className="text-xs text-slate-500">Subscription price changes detected</p>
+            </div>
+          </div>
+        )}
+
+        {subSummary?.priceIncreaseAlerts && subSummary.priceIncreaseAlerts.length > 0 && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm space-y-2">
+            <div className="flex items-center gap-2 font-bold text-amber-800">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <span>Subscription Price Increase Detected</span>
+            </div>
+            <ul className="list-disc list-inside text-xs space-y-1 text-amber-800">
+              {subSummary.priceIncreaseAlerts.map((alert, idx) => (
+                <li key={idx}>{alert}</li>
+              ))}
+            </ul>
           </div>
         )}
 
         <div className="flex flex-wrap gap-3">
           <Link
             href="/income"
-            className="px-4 py-2 rounded-md border border-slate-800 hover:bg-slate-950 text-slate-200 text-sm font-medium flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
           >
-            <Plus className="w-4 h-4" /> Add recurring income
+            <Plus className="w-4 h-4 text-emerald-600" /> Add Recurring Income
           </Link>
           <Link
             href="/expenses"
-            className="px-4 py-2 rounded-md border border-slate-800 hover:bg-slate-950 text-slate-200 text-sm font-medium flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
           >
-            <Plus className="w-4 h-4" /> Add recurring expense
+            <Plus className="w-4 h-4 text-emerald-600" /> Add Recurring Expense
           </Link>
         </div>
 
         {loading ? (
-          <p className="text-sm text-slate-400">Loading recurring templates…</p>
+          <div className="h-40 bg-slate-100 animate-pulse rounded-2xl" />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-              <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-emerald-400" /> Recurring income ({income.length})
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-emerald-600" /> Recurring Income ({income.length})
               </h3>
               {income.length === 0 ? (
-                <p className="text-sm text-slate-400">No recurring income yet. Add salary or other regular earnings with the recurring flag.</p>
+                <p className="text-xs text-slate-500 py-4">No recurring income yet. Add salary or other regular earnings with the recurring flag.</p>
               ) : (
                 <div className="space-y-2">
                   {income.map((item) => (
-                    <TemplateRow key={item.fingerprint} item={item} />
+                    <div key={item.fingerprint} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-semibold text-slate-900">{item.label}</p>
+                        <p className="text-slate-500 mt-0.5">{item.incomeType} · Last: {item.lastDate}</p>
+                      </div>
+                      <span className="font-bold text-emerald-600">Rs. {item.amount.toLocaleString()}</span>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-              <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-amber-400" /> Recurring expenses ({expense.length})
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-emerald-600" /> Auto-Identified Subscriptions ({subSummary?.subscriptions.length || 0})
               </h3>
-              {expense.length === 0 ? (
-                <p className="text-sm text-slate-400">No recurring expenses yet. Mark rent, subscriptions, and bills as recurring.</p>
+              {subSummary?.subscriptions.length === 0 ? (
+                <p className="text-xs text-slate-500 py-4">No recurring payment subscriptions detected yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {expense.map((item) => (
-                    <TemplateRow key={item.fingerprint} item={item} />
+                  {subSummary?.subscriptions.map((sub) => (
+                    <div key={sub.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-900">{sub.merchant}</p>
+                          {sub.status === 'INCREASED' && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">Price Increased</span>
+                          )}
+                        </div>
+                        <p className="text-slate-500 mt-0.5">{sub.category} · Next expected: {sub.nextExpectedDate}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-slate-900">Rs. {sub.monthlyEquivalent.toLocaleString()}/mo</p>
+                        <p className="text-[11px] text-slate-400">Rs. {sub.annualEquivalent.toLocaleString()}/yr</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
           </div>
         )}
-
-        <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-400">
-          <p className="font-medium text-slate-200 mb-1">How it works</p>
-          <ul className="list-disc list-inside space-y-1 text-xs">
-            <li>When creating income or expenses, enable the recurring option.</li>
-            <li>Click &quot;Process this month&quot; to auto-create entries that are not yet posted.</li>
-            <li>The system also runs a daily check on the server for all users.</li>
-          </ul>
-        </div>
       </div>
     </AppLayout>
   );

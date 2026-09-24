@@ -9,6 +9,7 @@ export type AssistantChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  structured?: any;
   source?: string;
   createdAt: string;
 };
@@ -16,6 +17,7 @@ export type AssistantChatMessage = {
 export type AssistantResponse = {
   status: string;
   answer: string;
+  structured?: any;
   source: string;
   usedOllama: boolean;
   messages: AssistantChatMessage[];

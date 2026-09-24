@@ -16,7 +16,9 @@ import {
   Lightbulb,
   AlertTriangle,
   Info,
+  Sparkles,
 } from 'lucide-react';
+import { fetchAIInsights, AIInsightItem } from '../../services/insights.service';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -49,20 +51,23 @@ export default function DashboardPage() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [recommendations, setRecommendations] = useState<AIInsight[]>([]);
+  const [aiInsights, setAiInsights] = useState<AIInsightItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const loadSidecars = async () => {
-    const [scoreResult, predictionResult, anomalyResult, recResult] = await Promise.allSettled([
+    const [scoreResult, predictionResult, anomalyResult, recResult, insightResult] = await Promise.allSettled([
       scoreService.get(),
       predictionService.get(),
       anomalyService.list(),
       recommendationsService.list(),
+      fetchAIInsights(),
     ]);
     setScore(scoreResult.status === 'fulfilled' ? scoreResult.value.score : null);
     setPrediction(predictionResult.status === 'fulfilled' ? predictionResult.value.prediction : null);
     setAnomalies(anomalyResult.status === 'fulfilled' ? anomalyResult.value.anomalies : []);
     setRecommendations(recResult.status === 'fulfilled' ? recResult.value.recommendations : []);
+    setAiInsights(insightResult.status === 'fulfilled' ? insightResult.value.insights : []);
   };
 
   const loadSummary = async (monthKey = selectedMonth) => {
@@ -162,6 +167,45 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-400">Loading dashboard…</p>
         ) : (
           <>
+            {aiInsights.length > 0 && (
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/20 shadow-md space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-emerald-400" /> ✨ AI Financial Insights
+                  </h3>
+                  <Link
+                    href="/assistant"
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                  >
+                    View full analysis <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {aiInsights.slice(0, 3).map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 hover:border-emerald-500/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/20">
+                          {idx + 1}
+                        </span>
+                        <p className="font-semibold text-sm text-slate-100 truncate">{item.title}</p>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.description}</p>
+                      {item.action && (
+                        <Link
+                          href={item.action.href}
+                          className="inline-block text-[11px] font-semibold text-emerald-400 hover:underline pt-1"
+                        >
+                          {item.action.label} →
+                        </Link>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {recommendations.length > 0 && (
               <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
                 <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">

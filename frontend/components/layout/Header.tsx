@@ -108,9 +108,12 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
             onFocus={() => {
               if (searchQuery.trim().length >= 2 && searchResults.length > 0) setSearchOpen(true);
             }}
-            placeholder="Search transactions, budgets, reports"
-            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-950 border border-slate-800 rounded-md text-slate-100 placeholder-slate-500 focus:outline-none focus:border-ink-400 transition-colors"
+            placeholder="Search transactions, budgets, goals (Ctrl+K)..."
+            className="w-full pl-9 pr-12 py-2 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
           />
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 rounded border border-slate-700">
+            Ctrl K
+          </kbd>
           {searchOpen && searchQuery.trim().length >= 2 && (
             <div className="absolute left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-lift z-50 overflow-hidden">
               {searchLoading ? (

@@ -4,14 +4,16 @@ import { config } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
 import { isDatabaseConnected } from '../../config/db.js';
 import { AssistantMessage } from './assistant.model.js';
+import { runAssistantEngine, EngineContext } from './assistant-engine.js';
+import { ChatTurn } from './conversation-context.js';
+import { getProfile } from '../profile/profile.service.js';
 import { getSummary } from '../summary/summary.service.js';
 import { listBudgets, PublicBudget } from '../budget/budget.service.js';
 import { listGoals } from '../goal/goal.service.js';
-import { getProfile } from '../profile/profile.service.js';
-import { getHealthScore } from '../score/score.service.js';
 import { getLatestPrediction } from '../prediction/prediction.service.js';
-import { runAssistantEngine, EngineContext } from './assistant-engine.js';
-import { ChatTurn } from './conversation-context.js';
+import { getHealthScore } from '../score/score.service.js';
+import { buildSecureFinancialContext } from './financial-context.js';
+import { FallbackAIProvider, getAIProvider, OllamaProvider, StructuredAIResponse } from './ai-provider.js';
 
 export const askAssistantSchema = z.object({
   question: z.string().trim().min(1, 'Enter a question.').max(500, 'Keep the question under 500 characters.'),
@@ -34,26 +36,13 @@ export type PublicChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  structured?: StructuredAIResponse;
   source?: string;
   createdAt: string;
 };
 
 const MAX_STORED_MESSAGES = 200;
-const ASSISTANT_SOURCE = 'SmartFin Assistant';
-
-type CompactContext = {
-  name: string;
-  monthLabel: string;
-  income: number;
-  expense: number;
-  savings: number;
-  savingsRate: number;
-  topCategories: { category: string; amount: number }[];
-  budgets: { label: string; amount: number; spent: number; utilization: number }[];
-  goals: { name: string; remaining: number; status: string }[];
-  health: { overallScore: number; status: string } | null;
-  prediction: { period: string; amount: number; changePercentage: number } | null;
-};
+const ASSISTANT_SOURCE = 'SmartFin AI Copilot';
 
 function assertDatabase() {
   if (!isDatabaseConnected()) {
@@ -65,18 +54,16 @@ function budgetLabel(budget: PublicBudget) {
   return budget.category || 'Overall';
 }
 
-function ollamaBase() {
-  return config.ollamaUrl.replace(/\/$/, '');
-}
-
 async function loadEngineContext(userId: string): Promise<EngineContext> {
   const [profile, summary, budgetResult, goalResult, prediction, health] = await Promise.all([
-    getProfile(userId),
-    getSummary(userId, 6),
-    listBudgets(userId, {}),
-    listGoals(userId),
-    getLatestPrediction(userId),
-    getHealthScore(userId),
+    getProfile(userId).catch(() => ({ name: 'User' })),
+    getSummary(userId, 6).catch(() => ({
+      currentMonth: { key: new Date().toISOString().slice(0, 7), label: 'Current Month' },
+    })),
+    listBudgets(userId, {}).catch(() => ({ budgets: [] })),
+    listGoals(userId).catch(() => ({ goals: [] })),
+    getLatestPrediction(userId).catch(() => null),
+    getHealthScore(userId).catch(() => null),
   ]);
 
   return {
@@ -116,107 +103,6 @@ async function loadEngineContext(userId: string): Promise<EngineContext> {
         }
       : null,
   };
-}
-
-function buildCompactContext(engineCtx: EngineContext, summary: Awaited<ReturnType<typeof getSummary>>): CompactContext {
-  return {
-    name: engineCtx.name,
-    monthLabel: engineCtx.monthLabel,
-    income: summary.currentMonth.income,
-    expense: summary.currentMonth.expense,
-    savings: summary.currentMonth.savings,
-    savingsRate: summary.currentMonth.savingsRate,
-    topCategories: summary.currentMonth.byCategory.slice(0, 5),
-    budgets: engineCtx.budgets.slice(0, 8).map((row) => ({
-      label: row.label,
-      amount: row.amount,
-      spent: row.spent,
-      utilization: row.utilization,
-    })),
-    goals: engineCtx.goals.slice(0, 5).map((row) => ({
-      name: row.name,
-      remaining: row.remaining,
-      status: row.status,
-    })),
-    health: engineCtx.health
-      ? { overallScore: engineCtx.health.overallScore, status: engineCtx.health.status }
-      : null,
-    prediction: engineCtx.prediction
-      ? {
-          period: engineCtx.prediction.period,
-          amount: engineCtx.prediction.amount,
-          changePercentage: engineCtx.prediction.changePercentage,
-        }
-      : null,
-  };
-}
-
-async function probeOllama() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 2000);
-  try {
-    const response = await fetch(`${ollamaBase()}/api/tags`, { signal: controller.signal });
-    if (!response.ok) {
-      return { available: false, model: config.ollamaModel };
-    }
-    const data = (await response.json()) as { models?: { name?: string }[] };
-    const names = (data.models || []).map((item) => item.name || '');
-    const hasModel = names.some((name) => name === config.ollamaModel || name.startsWith(`${config.ollamaModel}:`));
-    return { available: hasModel || names.length > 0, model: config.ollamaModel };
-  } catch {
-    return { available: false, model: config.ollamaModel };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function askOllama(
-  question: string,
-  compact: CompactContext,
-  history: ChatTurn[],
-  deterministicAnswer?: string
-): Promise<string | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 45000);
-  const recent = history.slice(-10);
-  const transcript = recent.map((turn) => `${turn.role === 'user' ? 'User' : 'Assistant'}: ${turn.text}`).join('\n');
-
-  const prompt = [
-    'You are SmartFin, a personal finance assistant.',
-    'Answer the latest user question directly in plain language.',
-    'Use ONLY the JSON context and any verified backend answer for amounts. Do not invent figures.',
-    'If a verified backend answer is provided, preserve its numbers exactly and you may improve wording only.',
-    'If the question cannot be answered from context, say what is missing and suggest a clearer question.',
-    'Keep the answer to 2-5 sentences unless a list is requested. Use Rs. for money.',
-    deterministicAnswer ? `Verified backend answer: ${deterministicAnswer}` : '',
-    `Context JSON: ${JSON.stringify(compact)}`,
-    transcript ? `Recent conversation:\n${transcript}` : 'Recent conversation: (none)',
-    `Latest question: ${question}`,
-  ]
-    .filter(Boolean)
-    .join('\n\n');
-
-  try {
-    const response = await fetch(`${ollamaBase()}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: config.ollamaModel,
-        prompt,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) return null;
-    const data = (await response.json()) as { response?: string };
-    const text = data.response?.trim();
-    return text || null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 function toPublicMessage(doc: {
@@ -276,15 +162,13 @@ export async function clearChatMessages(userId: string) {
 }
 
 export async function getAssistantStatus() {
-  const probe = await probeOllama();
+  const ollama = new OllamaProvider();
+  const ollamaAvailable = await ollama.isAvailable();
   return {
-    ollamaAvailable: probe.available,
-    model: probe.model,
+    ollamaAvailable,
+    model: config.ollamaModel,
+    aiProvider: process.env.AI_PROVIDER || 'fallback',
   };
-}
-
-function fallbackAnswer(engineCtx: EngineContext) {
-  return `I can help with your financial data. Try asking "How much did I spend in August?", "How much salary did I receive last month?", or "What did I spend on Food?" Your ${engineCtx.monthLabel} totals are available once you ask a specific question.`;
 }
 
 export async function askAssistant(userId: string, input: AskAssistantInput) {
@@ -293,35 +177,30 @@ export async function askAssistant(userId: string, input: AskAssistantInput) {
   const history = input.history || [];
 
   const engineResult = await runAssistantEngine(userId, input.question, history, engineCtx);
+  const verifiedAnswer = engineResult.answer.trim();
 
-  let answer = engineResult.answer.trim();
-  let usedOllama = false;
-  const preferOllama = input.useOllama !== false;
+  const finContext = await buildSecureFinancialContext(userId);
+  const aiProvider = getAIProvider();
 
-  if (!answer) {
-    if (preferOllama) {
-      const probe = await probeOllama();
-      if (probe.available) {
-        const summary = await getSummary(userId, 6);
-        const compact = buildCompactContext(engineCtx, summary);
-        const ollamaAnswer = await askOllama(input.question, compact, history);
-        if (ollamaAnswer) {
-          answer = ollamaAnswer;
-          usedOllama = true;
-        }
-      }
-    }
-    if (!answer) {
-      answer = fallbackAnswer(engineCtx);
-    }
+  let structuredResponse: StructuredAIResponse | null = null;
+
+  if (await aiProvider.isAvailable()) {
+    structuredResponse = await aiProvider.generateResponse(input.question, finContext, history, verifiedAnswer);
   }
 
-  const messages = await saveExchange(userId, input.question, answer, ASSISTANT_SOURCE);
+  if (!structuredResponse) {
+    const fallback = new FallbackAIProvider();
+    structuredResponse = await fallback.generateResponse(input.question, finContext, history, verifiedAnswer);
+  }
+
+  const mainAnswerText = structuredResponse.summary;
+
+  const messages = await saveExchange(userId, input.question, mainAnswerText, structuredResponse.source);
 
   return {
-    answer,
-    source: ASSISTANT_SOURCE,
-    usedOllama,
+    answer: mainAnswerText,
+    structured: structuredResponse,
+    source: structuredResponse.source,
     messages,
   };
 }
