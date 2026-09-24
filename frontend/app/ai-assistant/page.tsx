@@ -145,6 +145,8 @@ export default function AIAssistantPage() {
     'Find unusual spending',
     'Show my recurring subscriptions',
     'What happens if my income increases by 20%?',
+    'Can I afford a laptop for Rs. 150,000?',
+    'What happens if I save Rs. 15,000 every month?',
     'What happens if my rent increases?',
     'How much should I save for an emergency fund?',
     'What changed in my finances this month?',

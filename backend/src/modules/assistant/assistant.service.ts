@@ -13,6 +13,8 @@ import { listGoals } from '../goal/goal.service.js';
 import { getLatestPrediction } from '../prediction/prediction.service.js';
 import { getHealthScore } from '../score/score.service.js';
 import { buildSecureFinancialContext } from './financial-context.js';
+import { buildWhatIfResponse } from './affordability.service.js';
+import { buildEducationResponse } from './financial-education.service.js';
 import { FallbackAIProvider, getAIProvider, OllamaProvider, StructuredAIResponse } from './ai-provider.js';
 
 export const askAssistantSchema = z.object({
@@ -179,18 +181,30 @@ export async function askAssistant(userId: string, input: AskAssistantInput) {
   const engineResult = await runAssistantEngine(userId, input.question, history, engineCtx);
   const verifiedAnswer = engineResult.answer.trim();
 
-  const finContext = await buildSecureFinancialContext(userId);
-  const aiProvider = getAIProvider();
+  let structuredResponse: StructuredAIResponse;
 
-  let structuredResponse: StructuredAIResponse | null = null;
+  if (engineResult.isWhatIf && verifiedAnswer) {
+    structuredResponse = buildWhatIfResponse(input.question, verifiedAnswer);
+  } else if (engineResult.isEducation && engineResult.educationTopic) {
+    structuredResponse = await buildEducationResponse(input.question, engineResult.educationTopic);
+  } else {
+    const finContext = await buildSecureFinancialContext(userId);
+    const aiProvider = getAIProvider();
 
-  if (await aiProvider.isAvailable()) {
-    structuredResponse = await aiProvider.generateResponse(input.question, finContext, history, verifiedAnswer);
-  }
+    let wrapped: StructuredAIResponse | null = null;
 
-  if (!structuredResponse) {
-    const fallback = new FallbackAIProvider();
-    structuredResponse = await fallback.generateResponse(input.question, finContext, history, verifiedAnswer);
+    if (verifiedAnswer && (await aiProvider.isAvailable())) {
+      wrapped = await aiProvider.generateResponse(input.question, finContext, history, verifiedAnswer);
+    }
+
+    if (!wrapped) {
+      const fallback = new FallbackAIProvider();
+      wrapped = await fallback.generateResponse(input.question, finContext, history, verifiedAnswer);
+    }
+
+    structuredResponse =
+      wrapped ||
+      (await new FallbackAIProvider().generateResponse(input.question, finContext, history, verifiedAnswer))!;
   }
 
   const mainAnswerText = structuredResponse.summary;

@@ -69,13 +69,17 @@ export class FallbackAIProvider implements IAIProvider {
 
     return {
       title: 'SmartFin Financial Copilot',
-      summary: `I reviewed your financial data for ${context.monthLabel}. You have recorded Rs. ${context.income.toLocaleString()} in income and Rs. ${context.expense.toLocaleString()} in expenses.`,
+      summary:
+        `I can answer from your SmartFin records or explain general finance concepts. ` +
+        `For personal data, try "How much did I spend last month?" or "Give me a monthly financial summary." ` +
+        `For education, try "What is an emergency fund?" or "What is a savings rate?"`,
       evidence: [
+        `Your current month (${context.monthLabel}): Income Rs. ${context.income.toLocaleString()}, Expense Rs. ${context.expense.toLocaleString()}`,
         `Net Savings: Rs. ${context.savings.toLocaleString()} (${context.savingsRate}% rate)`,
-        `Active Budgets: ${context.budgets.length} configured`,
-        `Goals Progress: ${context.goals.length} active savings goals`,
+        `This snapshot is from your personal records — not general financial education.`,
       ],
-      recommendation: 'Ask me specific questions like "How much did I spend on Food?", "Compare this month with last month", or "Show my recurring subscriptions".',
+      recommendation:
+        'Ask a specific question about your data, or ask a general "What is…?" finance question.',
       source: this.name,
     };
   }

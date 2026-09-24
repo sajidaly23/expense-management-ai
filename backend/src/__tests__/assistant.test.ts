@@ -229,6 +229,100 @@ describe('assistant financial intelligence', () => {
     expect(res.body.answer).not.toMatch(/202,000/);
   });
 
+  it('answers financial education without personal data leakage', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'Education User' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const res = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'What is an emergency fund?', useOllama: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe('Financial Education');
+    expect(res.body.answer.toLowerCase()).toContain('emergency fund');
+    expect(res.body.answer).not.toMatch(/870,000|453,000/);
+  });
+
+  it('answers last month top spending phrasing', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'Most Spend User' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const res = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'where my last month money used mostly', useOllama: false, history: [] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.answer).toMatch(/August 2026/i);
+    expect(res.body.answer).toMatch(/Food|Rent/i);
+  });
+
+  it('handles expense follow-up why and category driver', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'Follow Up User' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const first = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'How much did I spend last month?', useOllama: false, history: [] });
+
+    expect(first.status).toBe(200);
+    expect(first.body.answer).toMatch(/August 2026/i);
+
+    const history = first.body.messages.map((m: { role: string; text: string }) => ({
+      role: m.role,
+      text: m.text,
+    }));
+
+    const why = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'Why?', useOllama: false, history });
+
+    expect(why.status).toBe(200);
+    expect(why.body.answer.toLowerCase()).toMatch(/increased|decreased/);
+
+    const driver = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'Which category caused it?', useOllama: false, history: [...history, ...why.body.messages.slice(-2).map((m: { role: string; text: string }) => ({ role: m.role, text: m.text }))] });
+
+    expect(driver.status).toBe(200);
+    expect(driver.body.answer).toMatch(/category|Food|Rent/i);
+  });
+
+  it('handles food follow-up for last month', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'Food Follow Up' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const first = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'How much did I spend on food this month?', useOllama: false, history: [] });
+
+    expect(first.status).toBe(200);
+    expect(first.body.answer).toMatch(/Food/i);
+
+    const history = first.body.messages.map((m: { role: string; text: string }) => ({
+      role: m.role,
+      text: m.text,
+    }));
+
+    const second = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'What about last month?', useOllama: false, history });
+
+    expect(second.status).toBe(200);
+    expect(second.body.answer).toMatch(/August 2026/i);
+    expect(second.body.answer).toMatch(/82,000|Rs\. 82,000/);
+  });
+
   it('compares August and September expenses', async () => {
     const { res: userRes } = await registerUser(app, { name: 'Compare User' });
     const token = userRes.body.token as string;
@@ -244,5 +338,39 @@ describe('assistant financial intelligence', () => {
     expect(res.body.answer).toMatch(/September/i);
     expect(res.body.answer).toMatch(/202,000|Rs\. 202,000/);
     expect(res.body.answer).toMatch(/251,000|Rs\. 251,000/);
+  });
+
+  it('answers what-if income increase with recorded calculations', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'What If User' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const res = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'What if my salary increases by 20%?', useOllama: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.answer).toMatch(/Based on the financial information currently recorded in SmartFin/i);
+    expect(res.body.answer).toMatch(/270,000|Rs\. 270,000/);
+    expect(res.body.answer).toMatch(/324,000|Rs\. 324,000/);
+    expect(res.body.source).toBe('SmartFin What-If Analysis');
+  });
+
+  it('answers affordability with recorded calculations', async () => {
+    const { res: userRes } = await registerUser(app, { name: 'Afford User' });
+    const token = userRes.body.token as string;
+    await seedFinancialData(token);
+
+    const res = await request(app)
+      .post('/api/assistant/ask')
+      .set(authHeader(token))
+      .send({ question: 'Can I afford a laptop for Rs. 150,000?', useOllama: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.answer).toMatch(/Based on the financial information currently recorded in SmartFin/i);
+    expect(res.body.answer).toMatch(/150,000|Rs\. 150,000/);
+    expect(res.body.answer).toMatch(/Purchase impact/i);
+    expect(res.body.source).toBe('SmartFin What-If Analysis');
   });
 });

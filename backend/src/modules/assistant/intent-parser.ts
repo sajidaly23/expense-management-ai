@@ -1,6 +1,13 @@
-import { ParsedPeriod, parsePeriod } from './date-parser.js';
+import { ParsedPeriod, buildMonthRange, monthKeyFromDate, parsePeriod, shiftMonth } from './date-parser.js';
+import { WhatIfScenario, parseWhatIfScenario } from './affordability.service.js';
+import { detectEducationTopic } from './financial-education.service.js';
 import { matchedCategory } from './financial-query.service.js';
-import { ConversationContext, isFollowUpQuestion } from './conversation-context.js';
+import {
+  ConversationContext,
+  isFollowUpQuestion,
+  isShortFollowUp,
+  resolveComparisonMonths,
+} from './conversation-context.js';
 
 export type IntentType =
   | 'GREETING'
@@ -23,12 +30,19 @@ export type IntentType =
   | 'SPENDING_VS_EARNING'
   | 'COMPOSITE'
   | 'CLARIFICATION'
+  | 'FINANCIAL_EDUCATION'
+  | 'EXPENSE_CHANGE_WHY'
+  | 'SAVINGS_CHANGE_WHY'
+  | 'CATEGORY_DRIVER'
+  | 'WHAT_IF'
   | 'GENERAL';
 
 export type Intent =
-  | { type: Exclude<IntentType, 'COMPOSITE' | 'CATEGORY_EXPENSE' | 'MONTHLY_COMPARISON'>; period?: ParsedPeriod }
+  | { type: Exclude<IntentType, 'COMPOSITE' | 'CATEGORY_EXPENSE' | 'MONTHLY_COMPARISON' | 'FINANCIAL_EDUCATION' | 'WHAT_IF'>; period?: ParsedPeriod }
   | { type: 'CATEGORY_EXPENSE'; category: string; period?: ParsedPeriod }
   | { type: 'MONTHLY_COMPARISON'; period: ParsedPeriod & { kind: 'compare' } }
+  | { type: 'FINANCIAL_EDUCATION'; topic: string }
+  | { type: 'WHAT_IF'; scenario: WhatIfScenario }
   | { type: 'COMPOSITE'; intents: Intent[] };
 
 function normalize(q: string) {
@@ -86,7 +100,11 @@ function asksLargestExpense(q: string) {
 }
 
 function asksSpendMost(q: string) {
-  return /\b(spend the most|spent the most|where did i spend|most spending)\b/.test(q);
+  return (
+    /\b(spend the most|spent the most|where did i spend|most spending)\b/.test(q) ||
+    /\b(where|how).*\bmoney\b.*\b(most|mostly)\b/.test(q) ||
+    /\b(money used|used mostly|used most)\b/.test(q)
+  );
 }
 
 function asksBudget(q: string) {
@@ -204,6 +222,86 @@ function detectSingleIntent(q: string, refDate: Date, ctx: ConversationContext):
   return null;
 }
 
+function detectFollowUpIntent(question: string, ctx: ConversationContext, refDate: Date): Intent | null {
+  const q = normalize(question);
+  const trimmed = question.trim();
+
+  if (!isFollowUpQuestion(question) && !isShortFollowUp(question)) {
+    return null;
+  }
+
+  if (/^why\??$/i.test(trimmed) || /\bwhy did (my )?(spending|expenses|it)\b/.test(q)) {
+    if (ctx.lastSubject === 'savings' || ctx.lastIntent === 'NET_SAVINGS') {
+      const monthKey = ctx.lastMonthKey || monthKeyFromDate(refDate);
+      return {
+        type: 'SAVINGS_CHANGE_WHY',
+        period: { kind: 'single', range: buildMonthRange(monthKey) },
+      };
+    }
+    const monthKey = ctx.lastMonthKey || monthKeyFromDate(refDate);
+    return {
+      type: 'EXPENSE_CHANGE_WHY',
+      period: { kind: 'single', range: buildMonthRange(monthKey) },
+    };
+  }
+
+  if (/\b(which category|what category|category caused|caused it|caused that|biggest driver)\b/.test(q)) {
+    const monthKey = ctx.lastMonthKey || monthKeyFromDate(refDate);
+    return {
+      type: 'CATEGORY_DRIVER',
+      period: { kind: 'single', range: buildMonthRange(monthKey) },
+    };
+  }
+
+  if (/^what about (last|previous) month/i.test(trimmed) || /^and (last|previous) month/i.test(trimmed)) {
+    const anchor = ctx.lastMonthKey || monthKeyFromDate(refDate);
+    const targetMonth = shiftMonth(anchor, -1);
+    const period = { kind: 'single' as const, range: buildMonthRange(targetMonth) };
+
+    if (ctx.lastCategory) {
+      return { type: 'CATEGORY_EXPENSE', category: ctx.lastCategory, period };
+    }
+    if (ctx.lastSubject === 'income' || ctx.lastIntent === 'TOTAL_INCOME' || ctx.lastIntent === 'SALARY_INCOME') {
+      return { type: 'TOTAL_INCOME', period };
+    }
+    if (ctx.lastSubject === 'savings' || ctx.lastIntent === 'NET_SAVINGS') {
+      return { type: 'NET_SAVINGS', period };
+    }
+    return { type: 'TOTAL_EXPENSE', period };
+  }
+
+  if (/^what about this month/i.test(trimmed) && ctx.lastCategory) {
+    const monthKey = monthKeyFromDate(refDate);
+    return {
+      type: 'CATEGORY_EXPENSE',
+      category: ctx.lastCategory,
+      period: { kind: 'single', range: buildMonthRange(monthKey) },
+    };
+  }
+
+  const compareMonths = resolveComparisonMonths(question, ctx, refDate);
+  if (compareMonths) {
+    return {
+      type: 'MONTHLY_COMPARISON',
+      period: {
+        kind: 'compare',
+        ranges: [buildMonthRange(compareMonths[0]), buildMonthRange(compareMonths[1])],
+      },
+    };
+  }
+
+  if (ctx.lastCategory && (isShortFollowUp(question) || /^what about (it|that)\??$/i.test(trimmed))) {
+    const monthKey = ctx.lastMonthKey || monthKeyFromDate(refDate);
+    return {
+      type: 'CATEGORY_EXPENSE',
+      category: ctx.lastCategory,
+      period: { kind: 'single', range: buildMonthRange(monthKey) },
+    };
+  }
+
+  return null;
+}
+
 function splitCompositeQuestion(question: string): string[] {
   const parts = question
     .split(/\band also\b|\band\b|,|\?/i)
@@ -226,6 +324,21 @@ export function parseIntents(
 
   if (/\b(help|what can you|what do you|how do you)\b/.test(q)) {
     return { type: 'HELP' };
+  }
+
+  const whatIfScenario = parseWhatIfScenario(question);
+  if (whatIfScenario) {
+    return { type: 'WHAT_IF', scenario: whatIfScenario };
+  }
+
+  const educationTopic = detectEducationTopic(question);
+  if (educationTopic) {
+    return { type: 'FINANCIAL_EDUCATION', topic: educationTopic };
+  }
+
+  const followUp = detectFollowUpIntent(question, ctx, refDate);
+  if (followUp) {
+    return followUp;
   }
 
   const comparison = asksComparison(q, refDate);

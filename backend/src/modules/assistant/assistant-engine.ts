@@ -1,8 +1,8 @@
-import { ParsedPeriod } from './date-parser.js';
+import { ParsedPeriod, shiftMonth } from './date-parser.js';
 import {
-  buildContextFromHistory,
+  buildStructuredContext,
   ChatTurn,
-  ConversationContext,
+  StructuredConversationContext,
   resolveCategory,
   resolvePeriod,
 } from './conversation-context.js';
@@ -16,8 +16,12 @@ import {
   getCategoryExpenses,
 } from './financial-query.service.js';
 import { Intent, parseIntents } from './intent-parser.js';
+import { runWhatIfAnalysis } from './affordability.service.js';
+import { getStaticEducationResponse } from './financial-education.service.js';
 import {
+  formatCategoryDriver,
   formatCategoryExpense,
+  formatExpenseChangeWhy,
   formatLargestExpense,
   formatMonthlyComparison,
   formatMonthlySummary,
@@ -25,11 +29,13 @@ import {
   formatRs,
   formatSalaryCount,
   formatSalaryIncome,
+  formatSavingsChangeWhy,
   formatSpendingVsEarning,
   formatTopCategories,
   formatTotalExpense,
   formatTotalIncome,
 } from './response-builder.js';
+import type { EducationTopic } from './financial-education.service.js';
 
 type BudgetRow = {
   label: string;
@@ -73,12 +79,16 @@ export type EngineContext = {
 export type EngineResult = {
   answer: string;
   confidence: 'high' | 'low';
+  intentType?: string;
+  educationTopic?: EducationTopic;
+  isEducation?: boolean;
+  isWhatIf?: boolean;
 };
 
 function periodToRange(
   period: ParsedPeriod | undefined,
   question: string,
-  ctx: ConversationContext,
+  ctx: StructuredConversationContext,
   refDate: Date
 ) {
   if (period?.kind === 'single') {
@@ -95,7 +105,7 @@ async function executeIntent(
   intent: Intent,
   userId: string,
   question: string,
-  convoCtx: ConversationContext,
+  convoCtx: StructuredConversationContext,
   engineCtx: EngineContext,
   refDate: Date
 ): Promise<string> {
@@ -105,7 +115,37 @@ async function executeIntent(
   }
 
   if (intent.type === 'HELP') {
-    return `I answer from your live financial records. Try questions like "How much did I spend in August?", "How much salary did I receive last month?", "What did I spend on Food?", or "Compare August and September expenses."`;
+    return `I answer from your live financial records. Try questions like "How much did I spend in August?", "How much salary did I receive last month?", "What did I spend on Food?", or "Compare August and September expenses." For scenarios, try "Can I afford a laptop for Rs. 150,000?" or "What if my salary increases by 20%?" I can also explain general finance topics like "What is an emergency fund?"`;
+  }
+
+  if (intent.type === 'WHAT_IF') {
+    return runWhatIfAnalysis(userId, intent.scenario);
+  }
+
+  if (intent.type === 'FINANCIAL_EDUCATION') {
+    return getStaticEducationResponse(intent.topic as EducationTopic).summary;
+  }
+
+  if (intent.type === 'EXPENSE_CHANGE_WHY') {
+    const range = periodToRange(intent.period, question, convoCtx, refDate);
+    const prevKey = shiftMonth(range.monthKey, -1);
+    const result = await compareMonths(userId, prevKey, range.monthKey);
+    return formatExpenseChangeWhy(result.b, result.a, result.expenseDelta);
+  }
+
+  if (intent.type === 'SAVINGS_CHANGE_WHY') {
+    const range = periodToRange(intent.period, question, convoCtx, refDate);
+    const prevKey = shiftMonth(range.monthKey, -1);
+    const result = await compareMonths(userId, prevKey, range.monthKey);
+    const savingsDelta = result.b.savings - result.a.savings;
+    return formatSavingsChangeWhy(result.b, result.a, savingsDelta);
+  }
+
+  if (intent.type === 'CATEGORY_DRIVER') {
+    const range = periodToRange(intent.period, question, convoCtx, refDate);
+    const prevKey = shiftMonth(range.monthKey, -1);
+    const result = await compareMonths(userId, prevKey, range.monthKey);
+    return formatCategoryDriver(result.b, result.a);
   }
 
   if (intent.type === 'COMPOSITE') {
@@ -283,21 +323,41 @@ export async function runAssistantEngine(
   engineCtx: EngineContext,
   refDate = new Date()
 ): Promise<EngineResult> {
-  const convoCtx = buildContextFromHistory(history, refDate);
+  const convoCtx = buildStructuredContext(history, refDate);
   const intent = parseIntents(question, convoCtx, refDate);
 
   if (intent.type === 'GENERAL') {
     return {
       answer: '',
       confidence: 'low',
+      intentType: 'GENERAL',
     };
+  }
+
+  if (intent.type === 'FINANCIAL_EDUCATION') {
+    const education = getStaticEducationResponse(intent.topic as EducationTopic);
+    return {
+      answer: education.summary,
+      confidence: 'high',
+      intentType: 'FINANCIAL_EDUCATION',
+      educationTopic: intent.topic as EducationTopic,
+      isEducation: true,
+    };
+  }
+
+  if (intent.type === 'WHAT_IF') {
+    const answer = await executeIntent(intent, userId, question, convoCtx, engineCtx, refDate);
+    if (!answer.trim()) {
+      return { answer: '', confidence: 'low', intentType: 'WHAT_IF' };
+    }
+    return { answer, confidence: 'high', intentType: 'WHAT_IF', isWhatIf: true };
   }
 
   const answer = await executeIntent(intent, userId, question, convoCtx, engineCtx, refDate);
 
   if (!answer.trim()) {
-    return { answer: '', confidence: 'low' };
+    return { answer: '', confidence: 'low', intentType: intent.type };
   }
 
-  return { answer, confidence: 'high' };
+  return { answer, confidence: 'high', intentType: intent.type };
 }

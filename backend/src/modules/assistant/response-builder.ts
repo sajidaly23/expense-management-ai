@@ -126,6 +126,84 @@ export function formatMonthlySummary(totals: MonthTotals) {
   );
 }
 
+export function formatExpenseChangeWhy(
+  current: MonthTotals,
+  previous: MonthTotals,
+  expenseDelta: number
+) {
+  if (current.expense === 0 && previous.expense === 0) {
+    return `There are no expenses recorded for ${current.label} or ${previous.label}, so there is no spending change to explain.`;
+  }
+
+  const direction = expenseDelta >= 0 ? 'increased' : 'decreased';
+  const absDelta = Math.abs(expenseDelta);
+
+  const prevMap = new Map(previous.byCategory.map((row) => [row.category, row.amount]));
+  const deltas = current.byCategory
+    .map((row) => ({
+      category: row.category,
+      delta: row.amount - (prevMap.get(row.category) || 0),
+      current: row.amount,
+      previous: prevMap.get(row.category) || 0,
+    }))
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+  const top = deltas[0];
+  let reply = `Your spending ${direction} by ${formatRs(absDelta)} from ${previous.label} (${formatRs(previous.expense)}) to ${current.label} (${formatRs(current.expense)}).`;
+
+  if (top && top.delta !== 0) {
+    const catDirection = top.delta >= 0 ? 'increased' : 'decreased';
+    reply += ` The largest contributor was ${top.category}, which ${catDirection} by ${formatRs(Math.abs(top.delta))} (${formatRs(top.previous)} → ${formatRs(top.current)}).`;
+  }
+
+  return reply;
+}
+
+export function formatSavingsChangeWhy(
+  current: MonthTotals,
+  previous: MonthTotals,
+  savingsDelta: number
+) {
+  const direction = savingsDelta >= 0 ? 'improved' : 'declined';
+  const absDelta = Math.abs(savingsDelta);
+
+  return (
+    `Your net savings ${direction} by ${formatRs(absDelta)} from ${previous.label} (${formatRs(previous.savings)}, ${previous.savingsRate}% rate) ` +
+    `to ${current.label} (${formatRs(current.savings)}, ${current.savingsRate}% rate). ` +
+    `Income moved from ${formatRs(previous.income)} to ${formatRs(current.income)}, and expenses from ${formatRs(previous.expense)} to ${formatRs(current.expense)}.`
+  );
+}
+
+export function formatCategoryDriver(current: MonthTotals, previous: MonthTotals) {
+  const prevMap = new Map(previous.byCategory.map((row) => [row.category, row.amount]));
+  const deltas = current.byCategory
+    .map((row) => ({
+      category: row.category,
+      delta: row.amount - (prevMap.get(row.category) || 0),
+      current: row.amount,
+      previous: prevMap.get(row.category) || 0,
+    }))
+    .sort((a, b) => b.delta - a.delta);
+
+  if (deltas.length === 0) {
+    return `No category spending is recorded for ${current.label}, so I cannot identify a driver.`;
+  }
+
+  const top = deltas[0];
+  if (top.delta <= 0) {
+    const highest = current.byCategory[0];
+    return `No category increased versus ${previous.label}. Your highest spending category in ${current.label} is ${highest.category} at ${formatRs(highest.amount)}.`;
+  }
+
+  const share = current.expense === 0 ? 0 : Number(((top.delta / Math.abs(current.expense - previous.expense || 1)) * 100).toFixed(1));
+
+  return (
+    `${top.category} contributed the most to the change between ${previous.label} and ${current.label}, ` +
+    `rising by ${formatRs(top.delta)} (${formatRs(top.previous)} → ${formatRs(top.current)}). ` +
+    `It accounts for roughly ${share}% of the overall spending shift.`
+  );
+}
+
 export function formatSpendingVsEarning(totals: MonthTotals) {
   const expenseBit =
     totals.expense === 0
