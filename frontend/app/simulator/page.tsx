@@ -40,6 +40,9 @@ export default function SimulatorPage() {
         categoryCutPercent: categoryCutPercent > 0 ? categoryCutPercent : 0,
         extraSavingsMonthly,
       });
+      if (!res.result) {
+        throw new ApiError('Simulation completed but no results were returned.', 500);
+      }
       setResult(res.result);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Simulation failed.');

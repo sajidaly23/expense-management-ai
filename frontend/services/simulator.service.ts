@@ -33,10 +33,17 @@ export type SimulatorResult = {
 };
 
 export const simulatorService = {
-  simulate(payload: SimulatorPayload) {
-    return apiRequest<{ status: string; result: SimulatorResult }>('/api/simulator', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  async simulate(payload: SimulatorPayload) {
+    const res = await apiRequest<{ status: string; result?: SimulatorResult; simulation?: SimulatorResult }>(
+      '/api/simulator',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return {
+      status: res.status,
+      result: res.result ?? res.simulation ?? null,
+    };
   },
 };
