@@ -167,79 +167,6 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-400">Loading dashboard…</p>
         ) : (
           <>
-            {aiInsights.length > 0 && (
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/20 shadow-md space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-white flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-emerald-400" /> ✨ AI Financial Insights
-                  </h3>
-                  <Link
-                    href="/assistant"
-                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
-                  >
-                    View full analysis <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {aiInsights.slice(0, 3).map((item, idx) => (
-                    <div
-                      key={item.id}
-                      className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 hover:border-emerald-500/30 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/20">
-                          {idx + 1}
-                        </span>
-                        <p className="font-semibold text-sm text-slate-100 truncate">{item.title}</p>
-                      </div>
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.description}</p>
-                      {item.action && (
-                        <Link
-                          href={item.action.href}
-                          className="inline-block text-[11px] font-semibold text-emerald-400 hover:underline pt-1"
-                        >
-                          {item.action.label} →
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {recommendations.length > 0 && (
-              <div className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="font-bold text-lg text-slate-100 flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5 text-amber-400" /> Smart recommendations
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {recommendations.slice(0, 4).map((item) => (
-                    <div
-                      key={item.id}
-                      className={`p-4 rounded-lg border text-sm ${
-                        item.type === 'warning'
-                          ? 'bg-amber-500/5 border-amber-500/20 text-slate-200'
-                          : item.type === 'positive'
-                            ? 'bg-emerald-500/5 border-emerald-500/20 text-slate-200'
-                            : 'bg-slate-950/60 border-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        {item.type === 'warning' ? (
-                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        ) : (
-                          <Info className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                        )}
-                        <div>
-                          <p className="font-semibold text-slate-100">{item.title}</p>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
@@ -490,6 +417,68 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="pt-4 mt-2 border-t border-slate-800 space-y-4">
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-400" /> Smart recommendations
+                    </h4>
+                    {recommendations.length === 0 && aiInsights.length === 0 ? (
+                      <p className="text-xs text-slate-400">
+                        Add more transactions to unlock personalized recommendations.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {recommendations.slice(0, 2).map((item) => (
+                          <div
+                            key={item.id}
+                            className={`p-3 rounded-lg border text-xs ${
+                              item.type === 'warning'
+                                ? 'bg-amber-500/5 border-amber-500/20'
+                                : item.type === 'positive'
+                                  ? 'bg-emerald-500/5 border-emerald-500/20'
+                                  : 'bg-slate-950/60 border-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              {item.type === 'warning' ? (
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                              ) : (
+                                <Info className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
+                              )}
+                              <div>
+                                <p className="font-semibold text-slate-100">{item.title}</p>
+                                <p className="text-slate-400 mt-0.5 leading-relaxed line-clamp-2">{item.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {recommendations.length === 0 &&
+                          aiInsights.slice(0, 2).map((item) => (
+                            <div
+                              key={item.id}
+                              className="p-3 rounded-lg border border-slate-800 bg-slate-950/60 text-xs space-y-1"
+                            >
+                              <p className="font-semibold text-slate-100 flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                                {item.title}
+                              </p>
+                              <p className="text-slate-400 leading-relaxed line-clamp-2">{item.description}</p>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href="/assistant"
+                    className="w-full py-2.5 rounded-md border border-slate-800 hover:bg-slate-950 text-slate-100 font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    View full analysis
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           </>
