@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { GoalStatus, SavingsGoal } from '../../types';
-import { Target, Plus, Pencil, Trash2, Calendar } from 'lucide-react';
+import { Target, Plus, Pencil, Trash2, Calendar, Wallet } from 'lucide-react';
 import { goalService } from '../../services/goal.service';
 import { ApiError } from '../../lib/api';
+import ContributeModal from '../../components/goals/ContributeModal';
 
 const PRIORITIES: SavingsGoal['priority'][] = ['LOW', 'MEDIUM', 'HIGH'];
 
@@ -39,6 +40,8 @@ export default function SavingsGoalsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
+  const [contributing, setContributing] = useState<SavingsGoal | null>(null);
+  const [toast, setToast] = useState('');
 
   const loadGoals = async () => {
     setError('');
@@ -108,6 +111,13 @@ export default function SavingsGoalsPage() {
     }
   };
 
+  const handleContributed = (updated: SavingsGoal) => {
+    setGoals((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    setContributing(null);
+    setToast(`Contribution recorded for ${updated.name}.`);
+    window.setTimeout(() => setToast(''), 3500);
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this savings goal?')) return;
     try {
@@ -157,7 +167,8 @@ export default function SavingsGoalsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {goals.map((goal) => {
-              const progress = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+              const progress = goal.progress ?? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+              const history = goal.contributions || [];
               return (
                 <div key={goal.id} className="p-6 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
                   <div className="flex items-start justify-between gap-3">
@@ -218,10 +229,59 @@ export default function SavingsGoalsPage() {
                       </span>
                     </div>
                   </div>
+
+                  {goal.status !== 'COMPLETED' && (
+                    <button
+                      type="button"
+                      onClick={() => setContributing(goal)}
+                      className="w-full px-4 py-2.5 rounded-md bg-ink-900 hover:bg-ink-800 text-white font-medium text-sm flex items-center justify-center gap-2"
+                    >
+                      <Wallet className="w-4 h-4" /> Contribute / Pay
+                    </button>
+                  )}
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Contribution history</p>
+                    {history.length === 0 ? (
+                      <p className="text-xs text-slate-500">No contributions yet.</p>
+                    ) : (
+                      <ul className="space-y-2 max-h-40 overflow-y-auto">
+                        {history.map((entry) => (
+                          <li
+                            key={entry.id}
+                            className="flex items-start justify-between gap-3 rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-xs"
+                          >
+                            <div>
+                              <p className="text-slate-200 font-medium">Rs. {entry.amount.toLocaleString()}</p>
+                              <p className="text-slate-500">
+                                {entry.date} · {entry.source === 'SALARY' ? 'Monthly salary / income' : 'Existing savings'}
+                              </p>
+                              {entry.notes ? <p className="text-slate-400 mt-1">{entry.notes}</p> : null}
+                            </div>
+                            <span className="text-slate-500 shrink-0">{entry.category}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
+        )}
+
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-[90] rounded-md border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-300 shadow-lift">
+            {toast}
+          </div>
+        )}
+
+        {contributing && (
+          <ContributeModal
+            goal={contributing}
+            onClose={() => setContributing(null)}
+            onSaved={handleContributed}
+          />
         )}
 
         {showModal &&

@@ -69,7 +69,7 @@ export default function BudgetsPage() {
     try {
       const [budgetRes, summaryRes] = await Promise.all([
         budgetService.list(selectedMonth),
-        summaryService.get(1, selectedMonth),
+        summaryService.get(6, selectedMonth),
       ]);
       setBudgets(budgetRes.budgets);
       setVariance(summaryRes.budgetVariance || []);

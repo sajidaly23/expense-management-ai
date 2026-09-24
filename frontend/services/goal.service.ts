@@ -1,4 +1,4 @@
-import { SavingsGoal } from '../types';
+import { ContributionSource, SavingsGoal } from '../types';
 import { apiRequest } from '../lib/api';
 
 export type GoalListResponse = {
@@ -21,6 +21,13 @@ export type GoalPayload = {
   priority: SavingsGoal['priority'];
 };
 
+export type ContributionPayload = {
+  amount: number;
+  source: ContributionSource;
+  date: string;
+  notes?: string;
+};
+
 export const goalService = {
   list() {
     return apiRequest<GoalListResponse>('/api/goals');
@@ -36,6 +43,13 @@ export const goalService = {
   update(id: string, payload: Partial<GoalPayload>) {
     return apiRequest<GoalResponse>(`/api/goals/${id}`, {
       method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  contribute(id: string, payload: ContributionPayload) {
+    return apiRequest<GoalResponse>(`/api/goals/${id}/contribute`, {
+      method: 'POST',
       body: JSON.stringify(payload),
     });
   },

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate.js';
 import { requireAuth } from '../auth/auth.middleware.js';
-import { create, list, remove, show, update } from './goal.controller.js';
-import { createGoalSchema, updateGoalSchema } from './goal.validation.js';
+import { contribute, create, list, remove, show, update } from './goal.controller.js';
+import { contributeGoalSchema, createGoalSchema, updateGoalSchema } from './goal.validation.js';
 
 const router = Router();
 
@@ -11,6 +11,7 @@ router.get('/', list);
 router.post('/', validate(createGoalSchema), create);
 router.get('/:id', show);
 router.patch('/:id', validate(updateGoalSchema), update);
+router.post('/:id/contribute', validate(contributeGoalSchema), contribute);
 router.delete('/:id', remove);
 
 export default router;

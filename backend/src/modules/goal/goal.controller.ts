@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { createGoal, deleteGoal, getGoal, listGoals, updateGoal } from './goal.service.js';
+import { contributeToGoal, createGoal, deleteGoal, getGoal, listGoals, updateGoal } from './goal.service.js';
 
 function paramId(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value || '';
@@ -36,6 +36,15 @@ export const update = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
     message: 'Savings goal updated.',
+    goal,
+  });
+});
+
+export const contribute = asyncHandler(async (req: Request, res: Response) => {
+  const goal = await contributeToGoal(req.user!.id, paramId(req.params.id), req.body);
+  res.status(201).json({
+    status: 'success',
+    message: 'Contribution recorded.',
     goal,
   });
 });

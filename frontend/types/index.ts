@@ -73,18 +73,33 @@ export interface Budget {
 
 export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'OVERDUE';
 
+export type ContributionSource = 'SALARY' | 'SAVINGS';
+
+export interface GoalContribution {
+  id: string;
+  goalId: string;
+  amount: number;
+  source: ContributionSource;
+  date: string;
+  notes: string;
+  type: 'SAVINGS_CONTRIBUTION';
+  category: string;
+}
+
 export interface SavingsGoal {
   id: string;
   userId: string;
   name: string;
   targetAmount: number;
   currentAmount: number;
+  progress?: number;
   remaining: number;
   deadline: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   status: GoalStatus;
   monthsRemaining: number;
   requiredMonthly: number;
+  contributions?: GoalContribution[];
 }
 
 export interface PredictionModel {

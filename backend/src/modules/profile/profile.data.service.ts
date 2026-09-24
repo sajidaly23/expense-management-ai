@@ -5,6 +5,7 @@ import { User } from '../auth/user.model.js';
 import { Income } from '../income/income.model.js';
 import { Expense } from '../expense/expense.model.js';
 import { Budget } from '../budget/budget.model.js';
+import { GoalContribution } from '../goal/goal.contribution.model.js';
 import { SavingsGoal } from '../goal/goal.model.js';
 import { Prediction } from '../prediction/prediction.model.js';
 import { Anomaly } from '../anomaly/anomaly.model.js';
@@ -80,6 +81,7 @@ export async function deleteUserAccount(userId: string, password: string) {
     Expense.deleteMany({ userId: uid }),
     Budget.deleteMany({ userId: uid }),
     SavingsGoal.deleteMany({ userId: uid }),
+    GoalContribution.deleteMany({ userId: uid }),
     Prediction.deleteMany({ userId: uid }),
     Anomaly.deleteMany({ userId: uid }),
     Notification.deleteMany({ userId: uid }),
