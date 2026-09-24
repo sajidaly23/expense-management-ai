@@ -20,12 +20,12 @@ const KNOWN_MERCHANTS: Record<string, { category: ExpenseCategory; subcategory?:
 };
 
 const KEYWORD_MAP: Record<ExpenseCategory, string[]> = {
-  Food: ['food', 'restaurant', 'grocery', 'lunch', 'dinner', 'cafe', 'meal', 'uber eats', 'foodpanda', 'dining'],
-  Transport: ['uber', 'careem', 'fuel', 'petrol', 'bus', 'train', 'taxi', 'transport', 'metro', 'gasoline'],
+  Food: ['food', 'restaurant', 'grocery', 'groceries', 'supermarket', 'lunch', 'dinner', 'cafe', 'coffee', 'meal', 'uber eats', 'foodpanda', 'dining', 'bakery'],
+  Transport: ['uber', 'careem', 'fuel', 'petrol', 'diesel', 'bus', 'train', 'taxi', 'transport', 'metro', 'gasoline', 'shell', 'pso'],
   Rent: ['rent', 'landlord', 'lease', 'housing', 'apartment'],
-  Bills: ['bill', 'electric', 'electricity', 'water', 'internet', 'phone', 'mobile', 'subscription', 'netflix', 'spotify'],
-  Education: ['school', 'tuition', 'course', 'book', 'university', 'education', 'exam'],
-  Healthcare: ['doctor', 'hospital', 'pharmacy', 'medicine', 'health', 'clinic', 'dental'],
+  Bills: ['bill', 'electric', 'electricity', 'water', 'internet', 'phone', 'mobile', 'subscription', 'netflix', 'spotify', 'consumer id', 'current bill'],
+  Education: ['school', 'tuition', 'course', 'book', 'university', 'education', 'exam', 'semester', 'college', 'fee'],
+  Healthcare: ['doctor', 'hospital', 'pharmacy', 'medicine', 'medical', 'health', 'clinic', 'dental', 'paracetamol', 'antibiotic', 'syrup', 'chemist'],
   Shopping: ['shop', 'mall', 'amazon', 'daraz', 'clothes', 'clothing', 'shoes', 'retail'],
   Entertainment: ['movie', 'cinema', 'game', 'concert', 'entertainment', 'hobby'],
   Travel: ['flight', 'hotel', 'travel', 'airbnb', 'vacation', 'trip'],
