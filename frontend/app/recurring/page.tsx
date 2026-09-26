@@ -68,7 +68,7 @@ export default function RecurringPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
           <div>
             <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Recurring Commitments</span>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-ink-900 mt-1">
               Bills &amp; Subscriptions
             </h1>
             <p className="text-slate-500 text-xs md:text-sm mt-1">
@@ -79,7 +79,7 @@ export default function RecurringPage() {
             type="button"
             onClick={handleProcess}
             disabled={processing}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center gap-2 shadow-xs transition-colors disabled:opacity-60"
+            className="px-5 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white font-semibold text-sm flex items-center gap-2 shadow-xs transition-colors disabled:opacity-60"
           >
             <RefreshCw className={`w-4 h-4 ${processing ? 'animate-spin' : ''}`} />
             {processing ? 'Processing…' : 'Process This Month'}
@@ -101,19 +101,19 @@ export default function RecurringPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monthly Commitments</span>
-              <h3 className="text-2xl font-bold text-slate-900">Rs. {subSummary.totalMonthlyCommitments.toLocaleString()} / mo</h3>
+              <h3 className="text-2xl font-bold text-ink-900">Rs. {subSummary.totalMonthlyCommitments.toLocaleString()} / mo</h3>
               <p className="text-xs text-slate-500">{subSummary.activeCount} active subscriptions &amp; recurring bills</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Annual Commitments</span>
-              <h3 className="text-2xl font-bold text-slate-900">Rs. {subSummary.totalAnnualCommitments.toLocaleString()} / yr</h3>
+              <h3 className="text-2xl font-bold text-ink-900">Rs. {subSummary.totalAnnualCommitments.toLocaleString()} / yr</h3>
               <p className="text-xs text-slate-500">Projected 12-month recurring expenditure</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Price Alerts</span>
-              <h3 className="text-2xl font-bold text-slate-900">{subSummary.priceIncreaseAlerts.length} Alerts</h3>
+              <h3 className="text-2xl font-bold text-ink-900">{subSummary.priceIncreaseAlerts.length} Alerts</h3>
               <p className="text-xs text-slate-500">Subscription price changes detected</p>
             </div>
           </div>
@@ -136,15 +136,15 @@ export default function RecurringPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/income"
-            className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4 text-emerald-600" /> Add Recurring Income
+            <Plus className="w-4 h-4" /> Add Recurring Income
           </Link>
           <Link
             href="/expenses"
-            className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-white hover:bg-ink-50 text-ink-900 text-sm font-semibold flex items-center gap-2 border border-ink-900 shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4 text-emerald-600" /> Add Recurring Expense
+            <Plus className="w-4 h-4" /> Add Recurring Expense
           </Link>
         </div>
 
@@ -153,7 +153,7 @@ export default function RecurringPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              <h3 className="font-bold text-lg text-ink-900 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-emerald-600" /> Recurring Income ({income.length})
               </h3>
               {income.length === 0 ? (
@@ -174,7 +174,7 @@ export default function RecurringPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              <h3 className="font-bold text-lg text-ink-900 flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-emerald-600" /> Auto-Identified Subscriptions ({subSummary?.subscriptions.length || 0})
               </h3>
               {subSummary?.subscriptions.length === 0 ? (

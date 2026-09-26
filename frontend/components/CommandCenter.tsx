@@ -10,7 +10,6 @@ import {
   Target,
   Camera,
   Bot,
-  FlaskConical,
   Search,
   X,
 } from 'lucide-react';
@@ -42,7 +41,6 @@ export default function CommandCenter() {
     { label: 'Create Monthly Budget', href: '/budgets', icon: PiggyBank, desc: 'Set category spending limits' },
     { label: 'Create Savings Goal', href: '/savings-goals', icon: Target, desc: 'Set target amount and target completion date' },
     { label: 'Ask AI Copilot', href: '/assistant', icon: Bot, desc: 'Get immediate AI analysis of your finances' },
-    { label: 'Run Scenario Simulator', href: '/simulator', icon: FlaskConical, desc: 'Simulate financial changes and what-if scenarios' },
   ];
 
   const filtered = actions.filter((action) =>

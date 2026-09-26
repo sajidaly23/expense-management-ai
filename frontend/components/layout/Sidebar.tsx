@@ -23,7 +23,6 @@ import {
   Lightbulb,
   CreditCard,
   Scale,
-  FlaskConical,
 } from 'lucide-react';
 import { getInitials, useAuth } from '../../context/AuthContext';
 
@@ -44,7 +43,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Anomalies', href: '/anomalies', icon: AlertTriangle },
     { name: 'Financial Health', href: '/financial-health', icon: HeartPulse },
     { name: 'Recommendations', href: '/recommendations', icon: Lightbulb },
-    { name: 'What-If Simulator', href: '/simulator', icon: FlaskConical },
+    { name: 'Tax & Zakat', href: '/tax-planner', icon: FileText },
+    { name: 'Forecast Lab', href: '/forecast-lab', icon: TrendingUp },
+    { name: 'Spending Behavior', href: '/behavior', icon: Lightbulb },
+    { name: 'Reconcile', href: '/reconcile', icon: Upload },
+    { name: 'Life Plan', href: '/life-plan', icon: Scale },
   ];
 
   const managementNav = [

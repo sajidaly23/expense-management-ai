@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.routes import health, train, predict, anomalies
+from app.routes import health, train, predict, anomalies, forecast, behavior
 from app.utils.config import settings
 
 app = FastAPI(
@@ -43,6 +43,8 @@ app.include_router(health.router)
 app.include_router(train.router)
 app.include_router(predict.router)
 app.include_router(anomalies.router)
+app.include_router(forecast.router)
+app.include_router(behavior.router)
 
 
 @app.get("/")
@@ -54,6 +56,8 @@ def root():
         "train": "/train",
         "predict": "/predict",
         "anomalies": "/anomalies",
+        "forecastIntervals": "/forecast-intervals",
+        "behavior": "/behavior",
         "status": "ONLINE",
     }
 

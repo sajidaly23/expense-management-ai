@@ -457,13 +457,6 @@ export default function AIAssistantPage() {
               <h4 className="text-xs font-bold text-[#122033] uppercase tracking-wider">Financial Tools</h4>
               <div className="space-y-1.5 text-xs font-medium">
                 <Link
-                  href="/simulator"
-                  className="flex items-center justify-between p-3 rounded-xl text-[#243044] hover:bg-[#f7f6f3] transition-colors group border border-transparent hover:border-[#e6e2da]"
-                >
-                  <span>Scenario Simulator</span>
-                  <ChevronRight className="w-4 h-4 text-[#6B7580] group-hover:text-[#122033]" />
-                </Link>
-                <Link
                   href="/anomalies"
                   className="flex items-center justify-between p-3 rounded-xl text-[#243044] hover:bg-[#f7f6f3] transition-colors group border border-transparent hover:border-[#e6e2da]"
                 >
